@@ -47,7 +47,6 @@ vehicleForm.addEventListener('submit', async (e) => {
         };
         await db.collection('vehicles').add(vehicle);
         vehicleForm.reset();
-        // Replaced alert with a custom message box for better UI
         showMessage('Vehicle added successfully!', 'success');
     } catch (error) {
         console.error("Error adding vehicle:", error);
@@ -69,7 +68,6 @@ driverForm.addEventListener('submit', async (e) => {
         };
         await db.collection('drivers').add(driver);
         driverForm.reset();
-        // Replaced alert with a custom message box for better UI
         showMessage('Driver added successfully!', 'success');
     } catch (error) {
         console.error("Error adding driver:", error);
@@ -82,7 +80,6 @@ const hireForm = document.getElementById('hireForm');
 hireForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
-        // Remove required attribute from fuel fields
         document.getElementById('fuelLiters').removeAttribute('required');
         document.getElementById('fuelPricePerLiter').removeAttribute('required');
         
@@ -108,7 +105,6 @@ hireForm.addEventListener('submit', async (e) => {
             hireAmount: parseFloat(document.getElementById('distance').value) * vehicle.perKmPrice
         };
         
-        // Only add fuel data if fields are not empty
         const fuelLiters = document.getElementById('fuelLiters').value;
         const fuelPricePerLiter = document.getElementById('fuelPricePerLiter').value;
         
@@ -124,7 +120,6 @@ hireForm.addEventListener('submit', async (e) => {
         
         await db.collection('hires').add(hire);
         hireForm.reset();
-        // Replaced alert with a custom message box for better UI
         showMessage('Hire record added successfully!', 'success');
     } catch (error) {
         console.error("Error adding hire:", error);
@@ -315,7 +310,6 @@ document.addEventListener('click', async (e) => {
         const id = e.target.getAttribute('data-id');
         const table = e.target.closest('table').id;
         
-        // Replaced confirm with a custom message box for better UI
         showConfirmation('Are you sure you want to delete this record?', async () => {
             try {
                 let collectionName;
@@ -491,7 +485,7 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
     }
 });
 
-// Filter functionality
+// Filter functionality - Fixed version
 document.getElementById('applyFilter').addEventListener('click', async () => {
     try {
         const month = document.getElementById('filterMonth').value;
@@ -499,14 +493,20 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
         
         let query = db.collection('hires');
         
+        // Apply month filter if not 'All'
         if (month !== 'All') {
             query = query.where('month', '==', month);
         }
+        
+        // Apply vehicle filter if not 'All'
         if (vehicle !== 'All') {
             query = query.where('vehicleId', '==', vehicle);
         }
         
-        const snapshot = await query.orderBy('createdAt').get();
+        // Add ordering
+        query = query.orderBy('createdAt');
+        
+        const snapshot = await query.get();
         const hiresList = document.getElementById('hiresList');
         hiresList.innerHTML = '';
         let totalFuel = 0;
@@ -518,12 +518,14 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
             return;
         }
         
+        // Get all drivers for display
         const driversSnapshot = await db.collection('drivers').get();
         const drivers = {};
         driversSnapshot.forEach(doc => {
             drivers[doc.id] = doc.data().name;
         });
         
+        // Process each hire record
         snapshot.forEach(doc => {
             const hire = doc.data();
             totalHire += hire.hireAmount || 0;
@@ -558,6 +560,7 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
         console.error("Error filtering hires:", error);
         document.getElementById('hiresList').innerHTML = '<tr><td colspan="12">Error filtering hire records</td></tr>';
         updateTotals(0, 0);
+        showMessage("Error filtering records. Please check console for details.", 'error');
     }
 });
 
@@ -590,13 +593,13 @@ function showMessage(message, type) {
     } else if (type === 'error') {
         messageBox.style.backgroundColor = '#e74c3c';
     } else {
-        messageBox.style.backgroundColor = '#3498db'; // Default blue
+        messageBox.style.backgroundColor = '#3498db';
     }
 
     messageBox.style.opacity = '1';
     setTimeout(() => {
         messageBox.style.opacity = '0';
-    }, 3000); // Message disappears after 3 seconds
+    }, 3000);
 }
 
 function showConfirmation(message, onConfirm) {
@@ -625,7 +628,6 @@ function showConfirmation(message, onConfirm) {
             confirmationModal.style.display = 'none';
         });
 
-        // Close when clicking outside the modal content
         confirmationModal.addEventListener('click', (e) => {
             if (e.target === confirmationModal) {
                 confirmationModal.style.display = 'none';
@@ -637,7 +639,6 @@ function showConfirmation(message, onConfirm) {
     confirmationModal.style.display = 'block';
 }
 
-
 // Close modals
 document.querySelectorAll('.close').forEach(closeBtn => {
     closeBtn.addEventListener('click', () => {
@@ -646,14 +647,13 @@ document.querySelectorAll('.close').forEach(closeBtn => {
 });
 
 window.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal') && e.target.id !== 'confirmationModal') { // Exclude confirmation modal
+    if (e.target.classList.contains('modal') && e.target.id !== 'confirmationModal') {
         e.target.style.display = 'none';
     }
 });
 
 // Initialize the app
 function initApp() {
-    // Remove required attribute from fuel fields
     document.getElementById('fuelLiters').removeAttribute('required');
     document.getElementById('fuelPricePerLiter').removeAttribute('required');
     
