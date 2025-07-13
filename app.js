@@ -1,16 +1,4 @@
-// Import Firebase modules
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-    getDatabase, 
-    ref, 
-    push, 
-    set, 
-    onValue, 
-    remove,
-    update
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-// Your web app's Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCUjMB_SYfE1g4wTXX8bjqrjVx61dfoL5E",
     authDomain: "jayasooriya-enterprises-c566f.firebaseapp.com",
@@ -22,8 +10,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 // DOM Elements
 const vehiclesTab = document.getElementById('vehiclesTab');
@@ -34,222 +22,177 @@ const driversSection = document.getElementById('driversSection');
 const hiresSection = document.getElementById('hiresSection');
 
 // Tab Switching
-vehiclesTab.addEventListener('click', () => {
-    setActiveTab(vehiclesTab, vehiclesSection);
-});
-
-driversTab.addEventListener('click', () => {
-    setActiveTab(driversTab, driversSection);
-});
-
-hiresTab.addEventListener('click', () => {
-    setActiveTab(hiresTab, hiresSection);
-});
+vehiclesTab.addEventListener('click', () => setActiveTab(vehiclesTab, vehiclesSection));
+driversTab.addEventListener('click', () => setActiveTab(driversTab, driversSection));
+hiresTab.addEventListener('click', () => setActiveTab(hiresTab, hiresSection));
 
 function setActiveTab(tab, section) {
-    // Remove active class from all tabs and sections
     document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('main section').forEach(sec => sec.classList.remove('active'));
-    
-    // Add active class to selected tab and section
     tab.classList.add('active');
     section.classList.add('active');
 }
 
 // Vehicle Management
 const vehicleForm = document.getElementById('vehicleForm');
-const vehiclesList = document.getElementById('vehiclesList');
-
-vehicleForm.addEventListener('submit', (e) => {
+vehicleForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    const vehicleNumber = document.getElementById('vehicleNumber').value;
-    const vehicleSize = document.getElementById('vehicleSize').value;
-    const perKmPrice = parseFloat(document.getElementById('perKmPrice').value);
-    const ownership = document.getElementById('ownership').value;
-    
-    // Push data to Firebase
-    const newVehicleRef = push(ref(database, 'vehicles'));
-    set(newVehicleRef, {
-        vehicleNumber,
-        vehicleSize,
-        perKmPrice,
-        ownership
-    });
-    
-    // Clear form
-    vehicleForm.reset();
-});
-
-// Listen for changes in vehicles data
-onValue(ref(database, 'vehicles'), (snapshot) => {
-    vehiclesList.innerHTML = '';
-    
-    if (snapshot.exists()) {
-        snapshot.forEach((childSnapshot) => {
-            const vehicle = childSnapshot.val();
-            const vehicleId = childSnapshot.key;
-            
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${vehicle.vehicleNumber}</td>
-                <td>${vehicle.vehicleSize}</td>
-                <td>${vehicle.perKmPrice.toFixed(2)}</td>
-                <td>${vehicle.ownership}</td>
-                <td>
-                    <button class="action-btn edit-btn" data-id="${vehicleId}">Edit</button>
-                    <button class="action-btn delete-btn" data-id="${vehicleId}">Delete</button>
-                </td>
-            `;
-            
-            vehiclesList.appendChild(row);
-        });
-        
-        // Populate vehicle dropdowns
-        populateVehicleDropdowns();
-    } else {
-        vehiclesList.innerHTML = '<tr><td colspan="5">No vehicles found</td></tr>';
+    try {
+        const vehicle = {
+            vehicleNumber: document.getElementById('vehicleNumber').value,
+            vehicleSize: document.getElementById('vehicleSize').value,
+            perKmPrice: parseFloat(document.getElementById('perKmPrice').value),
+            ownership: document.getElementById('ownership').value,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await db.collection('vehicles').add(vehicle);
+        vehicleForm.reset();
+    } catch (error) {
+        console.error("Error adding vehicle:", error);
+        alert("Failed to add vehicle. Please check console for details.");
     }
 });
 
 // Driver Management
 const driverForm = document.getElementById('driverForm');
-const driversList = document.getElementById('driversList');
-
-driverForm.addEventListener('submit', (e) => {
+driverForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    const driverName = document.getElementById('driverName').value;
-    const licenseNumber = document.getElementById('licenseNumber').value;
-    const driverAge = parseInt(document.getElementById('driverAge').value);
-    const driverAddress = document.getElementById('driverAddress').value;
-    
-    // Push data to Firebase
-    const newDriverRef = push(ref(database, 'drivers'));
-    set(newDriverRef, {
-        name: driverName,
-        licenseNumber,
-        age: driverAge,
-        address: driverAddress
-    });
-    
-    // Clear form
-    driverForm.reset();
-});
-
-// Listen for changes in drivers data
-onValue(ref(database, 'drivers'), (snapshot) => {
-    driversList.innerHTML = '';
-    
-    if (snapshot.exists()) {
-        snapshot.forEach((childSnapshot) => {
-            const driver = childSnapshot.val();
-            const driverId = childSnapshot.key;
-            
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${driver.name}</td>
-                <td>${driver.licenseNumber}</td>
-                <td>${driver.age}</td>
-                <td>${driver.address}</td>
-                <td>
-                    <button class="action-btn edit-btn" data-id="${driverId}">Edit</button>
-                    <button class="action-btn delete-btn" data-id="${driverId}">Delete</button>
-                </td>
-            `;
-            
-            driversList.appendChild(row);
-        });
-        
-        // Populate driver dropdowns
-        populateDriverDropdowns();
-    } else {
-        driversList.innerHTML = '<tr><td colspan="5">No drivers found</td></tr>';
+    try {
+        const driver = {
+            name: document.getElementById('driverName').value,
+            licenseNumber: document.getElementById('licenseNumber').value,
+            age: parseInt(document.getElementById('driverAge').value),
+            address: document.getElementById('driverAddress').value,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await db.collection('drivers').add(driver);
+        driverForm.reset();
+    } catch (error) {
+        console.error("Error adding driver:", error);
+        alert("Failed to add driver. Please check console for details.");
     }
 });
 
 // Hire Management
 const hireForm = document.getElementById('hireForm');
-const hiresList = document.getElementById('hiresList');
-const totalFuelCost = document.getElementById('totalFuelCost');
-const totalHireAmount = document.getElementById('totalHireAmount');
-const netProfit = document.getElementById('netProfit');
-
-hireForm.addEventListener('submit', (e) => {
+hireForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    const vehicleId = document.getElementById('hireVehicle').value;
-    const month = document.getElementById('hireMonth').value;
-    const fromLocation = document.getElementById('fromLocation').value;
-    const toLocation = document.getElementById('toLocation').value;
-    const distance = parseFloat(document.getElementById('distance').value);
-    const fuelLiters = parseFloat(document.getElementById('fuelLiters').value);
-    const fuelPricePerLiter = parseFloat(document.getElementById('fuelPricePerLiter').value);
-    const hireDate = document.getElementById('hireDate').value;
-    const driverId = document.getElementById('hireDriver').value || null;
-    
-    // Get vehicle details to calculate hire amount
-    const vehicleRef = ref(database, `vehicles/${vehicleId}`);
-    onValue(vehicleRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const vehicle = snapshot.val();
-            const hireAmount = distance * vehicle.perKmPrice;
-            const fuelCost = fuelLiters * fuelPricePerLiter;
-            
-            // Push data to Firebase
-            const newHireRef = push(ref(database, 'hires'));
-            set(newHireRef, {
-                vehicleId,
-                vehicleNumber: vehicle.vehicleNumber,
-                month,
-                fromLocation,
-                toLocation,
-                distance,
-                fuelLiters,
-                fuelPricePerLiter,
-                fuelCost,
-                perKmPrice: vehicle.perKmPrice,
-                hireAmount,
-                hireDate,
-                driverId
-            });
-            
-            // Clear form
-            hireForm.reset();
+    try {
+        const vehicleId = document.getElementById('hireVehicle').value;
+        const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
+        
+        if (!vehicleDoc.exists) {
+            throw new Error("Selected vehicle not found");
         }
-    }, { onlyOnce: true });
+
+        const vehicle = vehicleDoc.data();
+        const hire = {
+            vehicleId: vehicleId,
+            vehicleNumber: vehicle.vehicleNumber,
+            month: document.getElementById('hireMonth').value,
+            fromLocation: document.getElementById('fromLocation').value,
+            toLocation: document.getElementById('toLocation').value,
+            distance: parseFloat(document.getElementById('distance').value),
+            fuelLiters: parseFloat(document.getElementById('fuelLiters').value),
+            fuelPricePerLiter: parseFloat(document.getElementById('fuelPricePerLiter').value),
+            perKmPrice: vehicle.perKmPrice,
+            hireDate: document.getElementById('hireDate').value,
+            driverId: document.getElementById('hireDriver').value || null,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        hire.fuelCost = hire.fuelLiters * hire.fuelPricePerLiter;
+        hire.hireAmount = hire.distance * hire.perKmPrice;
+        
+        await db.collection('hires').add(hire);
+        hireForm.reset();
+    } catch (error) {
+        console.error("Error adding hire:", error);
+        alert("Failed to add hire record. Please check console for details.");
+    }
 });
 
-// Listen for changes in hires data
-onValue(ref(database, 'hires'), (snapshot) => {
-    hiresList.innerHTML = '';
-    let totalFuel = 0;
-    let totalHire = 0;
-    
-    if (snapshot.exists()) {
-        // Get drivers data for display
-        const driversPromise = new Promise((resolve) => {
-            onValue(ref(database, 'drivers'), (driversSnapshot) => {
-                const drivers = {};
-                if (driversSnapshot.exists()) {
-                    driversSnapshot.forEach((driverChild) => {
-                        drivers[driverChild.key] = driverChild.val().name;
-                    });
-                }
-                resolve(drivers);
-            }, { onlyOnce: true });
+// Load Vehicles with real-time updates
+function loadVehicles() {
+    db.collection('vehicles').orderBy('createdAt').onSnapshot((snapshot) => {
+        const vehiclesList = document.getElementById('vehiclesList');
+        vehiclesList.innerHTML = '';
+        
+        snapshot.forEach(doc => {
+            const vehicle = doc.data();
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${vehicle.vehicleNumber}</td>
+                <td>${vehicle.vehicleSize}</td>
+                <td>${vehicle.perKmPrice.toFixed(2)}</td>
+                <td>${vehicle.ownership}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
+                    <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
+                </td>
+            `;
+            vehiclesList.appendChild(tr);
         });
         
-        driversPromise.then((drivers) => {
-            snapshot.forEach((childSnapshot) => {
-                const hire = childSnapshot.val();
-                const hireId = childSnapshot.key;
+        // Update vehicle dropdowns
+        populateVehicleDropdowns(snapshot);
+    }, error => {
+        console.error("Error loading vehicles:", error);
+    });
+}
+
+// Load Drivers with real-time updates
+function loadDrivers() {
+    db.collection('drivers').orderBy('createdAt').onSnapshot((snapshot) => {
+        const driversList = document.getElementById('driversList');
+        driversList.innerHTML = '';
+        
+        snapshot.forEach(doc => {
+            const driver = doc.data();
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${driver.name}</td>
+                <td>${driver.licenseNumber}</td>
+                <td>${driver.age}</td>
+                <td>${driver.address}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
+                    <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
+                </td>
+            `;
+            driversList.appendChild(tr);
+        });
+        
+        // Update driver dropdowns
+        populateDriverDropdowns(snapshot);
+    }, error => {
+        console.error("Error loading drivers:", error);
+    });
+}
+
+// Load Hires with real-time updates
+function loadHires() {
+    db.collection('hires').orderBy('createdAt').onSnapshot(async (snapshot) => {
+        const hiresList = document.getElementById('hiresList');
+        hiresList.innerHTML = '';
+        let totalFuel = 0;
+        let totalHire = 0;
+        
+        if (!snapshot.empty) {
+            // Get all drivers for display
+            const driversSnapshot = await db.collection('drivers').get();
+            const drivers = {};
+            driversSnapshot.forEach(doc => {
+                drivers[doc.id] = doc.data().name;
+            });
+            
+            snapshot.forEach(doc => {
+                const hire = doc.data();
+                totalFuel += hire.fuelCost || 0;
+                totalHire += hire.hireAmount || 0;
                 
-                totalFuel += hire.fuelCost;
-                totalHire += hire.hireAmount;
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
                     <td>${hire.hireDate}</td>
                     <td>${hire.vehicleNumber}</td>
                     <td>${hire.fromLocation}</td>
@@ -260,197 +203,95 @@ onValue(ref(database, 'hires'), (snapshot) => {
                     <td>${hire.fuelCost.toFixed(2)}</td>
                     <td>${hire.perKmPrice.toFixed(2)}</td>
                     <td>${hire.hireAmount.toFixed(2)}</td>
-                    <td>${hire.driverId ? drivers[hire.driverId] || 'N/A' : 'N/A'}</td>
+                    <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
                     <td>
-                        <button class="action-btn edit-btn" data-id="${hireId}">Edit</button>
-                        <button class="action-btn delete-btn" data-id="${hireId}">Delete</button>
+                        <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
+                        <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
                     </td>
                 `;
-                
-                hiresList.appendChild(row);
-            });
-            
-            // Update totals
-            totalFuelCost.textContent = totalFuel.toFixed(2);
-            totalHireAmount.textContent = totalHire.toFixed(2);
-            netProfit.textContent = (totalHire - totalFuel).toFixed(2);
-        });
-    } else {
-        hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
-        totalFuelCost.textContent = '0.00';
-        totalHireAmount.textContent = '0.00';
-        netProfit.textContent = '0.00';
-    }
-});
-
-// Filter functionality
-const applyFilter = document.getElementById('applyFilter');
-const filterMonth = document.getElementById('filterMonth');
-const filterVehicle = document.getElementById('filterVehicle');
-
-applyFilter.addEventListener('click', () => {
-    const month = filterMonth.value;
-    const vehicle = filterVehicle.value;
-    
-    onValue(ref(database, 'hires'), (snapshot) => {
-        hiresList.innerHTML = '';
-        let totalFuel = 0;
-        let totalHire = 0;
-        
-        if (snapshot.exists()) {
-            // Get drivers data for display
-            const driversPromise = new Promise((resolve) => {
-                onValue(ref(database, 'drivers'), (driversSnapshot) => {
-                    const drivers = {};
-                    if (driversSnapshot.exists()) {
-                        driversSnapshot.forEach((driverChild) => {
-                            drivers[driverChild.key] = driverChild.val().name;
-                        });
-                    }
-                    resolve(drivers);
-                }, { onlyOnce: true });
-            });
-            
-            driversPromise.then((drivers) => {
-                snapshot.forEach((childSnapshot) => {
-                    const hire = childSnapshot.val();
-                    const hireId = childSnapshot.key;
-                    
-                    // Apply filters
-                    if ((month === 'All' || hire.month === month) && 
-                        (vehicle === 'All' || hire.vehicleId === vehicle)) {
-                        
-                        totalFuel += hire.fuelCost;
-                        totalHire += hire.hireAmount;
-                        
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${hire.hireDate}</td>
-                            <td>${hire.vehicleNumber}</td>
-                            <td>${hire.fromLocation}</td>
-                            <td>${hire.toLocation}</td>
-                            <td>${hire.distance.toFixed(1)}</td>
-                            <td>${hire.fuelLiters.toFixed(1)}</td>
-                            <td>${hire.fuelPricePerLiter.toFixed(2)}</td>
-                            <td>${hire.fuelCost.toFixed(2)}</td>
-                            <td>${hire.perKmPrice.toFixed(2)}</td>
-                            <td>${hire.hireAmount.toFixed(2)}</td>
-                            <td>${hire.driverId ? drivers[hire.driverId] || 'N/A' : 'N/A'}</td>
-                            <td>
-                                <button class="action-btn edit-btn" data-id="${hireId}">Edit</button>
-                                <button class="action-btn delete-btn" data-id="${hireId}">Delete</button>
-                            </td>
-                        `;
-                        
-                        hiresList.appendChild(row);
-                    }
-                });
-                
-                // Update totals
-                totalFuelCost.textContent = totalFuel.toFixed(2);
-                totalHireAmount.textContent = totalHire.toFixed(2);
-                netProfit.textContent = (totalHire - totalFuel).toFixed(2);
+                hiresList.appendChild(tr);
             });
         } else {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
-            totalFuelCost.textContent = '0.00';
-            totalHireAmount.textContent = '0.00';
-            netProfit.textContent = '0.00';
         }
+        
+        // Update totals
+        document.getElementById('totalFuelCost').textContent = totalFuel.toFixed(2);
+        document.getElementById('totalHireAmount').textContent = totalHire.toFixed(2);
+        document.getElementById('netProfit').textContent = (totalHire - totalFuel).toFixed(2);
+    }, error => {
+        console.error("Error loading hires:", error);
     });
-});
+}
 
 // Populate vehicle dropdowns
-function populateVehicleDropdowns() {
-    const hireVehicle = document.getElementById('hireVehicle');
-    const editHireVehicle = document.getElementById('editHireVehicle');
-    const filterVehicle = document.getElementById('filterVehicle');
+function populateVehicleDropdowns(vehiclesSnapshot) {
+    const dropdowns = [
+        document.getElementById('hireVehicle'),
+        document.getElementById('editHireVehicle'),
+        document.getElementById('filterVehicle')
+    ];
     
-    // Clear existing options except the first one
-    while (hireVehicle.options.length > 1) hireVehicle.remove(1);
-    while (editHireVehicle.options.length > 1) editHireVehicle.remove(1);
-    while (filterVehicle.options.length > 1) filterVehicle.remove(1);
-    
-    // Get vehicles data
-    onValue(ref(database, 'vehicles'), (snapshot) => {
-        if (snapshot.exists()) {
-            snapshot.forEach((childSnapshot) => {
-                const vehicle = childSnapshot.val();
-                const vehicleId = childSnapshot.key;
-                
-                // Add to hire vehicle dropdown
-                const option1 = document.createElement('option');
-                option1.value = vehicleId;
-                option1.textContent = `${vehicle.vehicleNumber} (${vehicle.vehicleSize})`;
-                hireVehicle.appendChild(option1);
-                
-                // Add to edit hire vehicle dropdown
-                const option2 = document.createElement('option');
-                option2.value = vehicleId;
-                option2.textContent = `${vehicle.vehicleNumber} (${vehicle.vehicleSize})`;
-                editHireVehicle.appendChild(option2);
-                
-                // Add to filter vehicle dropdown
-                const option3 = document.createElement('option');
-                option3.value = vehicleId;
-                option3.textContent = `${vehicle.vehicleNumber} (${vehicle.vehicleSize})`;
-                filterVehicle.appendChild(option3);
+    dropdowns.forEach(dropdown => {
+        // Keep the first option
+        while (dropdown.options.length > 1) dropdown.remove(1);
+        
+        if (!vehiclesSnapshot.empty) {
+            vehiclesSnapshot.forEach(doc => {
+                const vehicle = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = `${vehicle.vehicleNumber} (${vehicle.vehicleSize})`;
+                dropdown.appendChild(option);
             });
         }
     });
 }
 
 // Populate driver dropdowns
-function populateDriverDropdowns() {
-    const hireDriver = document.getElementById('hireDriver');
-    const editHireDriver = document.getElementById('editHireDriver');
+function populateDriverDropdowns(driversSnapshot) {
+    const dropdowns = [
+        document.getElementById('hireDriver'),
+        document.getElementById('editHireDriver')
+    ];
     
-    // Clear existing options except the first one
-    while (hireDriver.options.length > 1) hireDriver.remove(1);
-    while (editHireDriver.options.length > 1) editHireDriver.remove(1);
-    
-    // Get drivers data
-    onValue(ref(database, 'drivers'), (snapshot) => {
-        if (snapshot.exists()) {
-            snapshot.forEach((childSnapshot) => {
-                const driver = childSnapshot.val();
-                const driverId = childSnapshot.key;
-                
-                // Add to hire driver dropdown
-                const option1 = document.createElement('option');
-                option1.value = driverId;
-                option1.textContent = `${driver.name} (${driver.licenseNumber})`;
-                hireDriver.appendChild(option1);
-                
-                // Add to edit hire driver dropdown
-                const option2 = document.createElement('option');
-                option2.value = driverId;
-                option2.textContent = `${driver.name} (${driver.licenseNumber})`;
-                editHireDriver.appendChild(option2);
+    dropdowns.forEach(dropdown => {
+        // Keep the first option
+        while (dropdown.options.length > 1) dropdown.remove(1);
+        
+        if (!driversSnapshot.empty) {
+            driversSnapshot.forEach(doc => {
+                const driver = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = `${driver.name} (${driver.licenseNumber})`;
+                dropdown.appendChild(option);
             });
         }
     });
 }
 
 // Edit and Delete functionality
-document.addEventListener('click', (e) => {
+document.addEventListener('click', async (e) => {
     // Delete buttons
     if (e.target.classList.contains('delete-btn')) {
         const id = e.target.getAttribute('data-id');
         const table = e.target.closest('table').id;
         
         if (confirm('Are you sure you want to delete this record?')) {
-            let dbRef;
-            
-            if (table === 'vehiclesTable') {
-                dbRef = ref(database, `vehicles/${id}`);
-            } else if (table === 'driversTable') {
-                dbRef = ref(database, `drivers/${id}`);
-            } else if (table === 'hiresTable') {
-                dbRef = ref(database, `hires/${id}`);
+            try {
+                let collectionName;
+                if (table === 'vehiclesTable') collectionName = 'vehicles';
+                else if (table === 'driversTable') collectionName = 'drivers';
+                else if (table === 'hiresTable') collectionName = 'hires';
+                
+                if (collectionName) {
+                    await db.collection(collectionName).doc(id).delete();
+                }
+            } catch (error) {
+                console.error("Error deleting document:", error);
+                alert("Failed to delete record. Please check console for details.");
             }
-            
-            remove(dbRef);
         }
     }
     
@@ -459,54 +300,36 @@ document.addEventListener('click', (e) => {
         const id = e.target.getAttribute('data-id');
         const table = e.target.closest('table').id;
         
-        if (table === 'vehiclesTable') {
-            // Get vehicle data
-            onValue(ref(database, `vehicles/${id}`), (snapshot) => {
-                if (snapshot.exists()) {
-                    const vehicle = snapshot.val();
-                    
-                    // Fill edit form
+        try {
+            if (table === 'vehiclesTable') {
+                const doc = await db.collection('vehicles').doc(id).get();
+                if (doc.exists) {
+                    const vehicle = doc.data();
                     document.getElementById('editVehicleId').value = id;
                     document.getElementById('editVehicleNumber').value = vehicle.vehicleNumber;
                     document.getElementById('editVehicleSize').value = vehicle.vehicleSize;
                     document.getElementById('editPerKmPrice').value = vehicle.perKmPrice;
                     document.getElementById('editOwnership').value = vehicle.ownership;
-                    
-                    // Show modal
                     document.getElementById('editVehicleModal').style.display = 'block';
                 }
-            });
-        } else if (table === 'driversTable') {
-            // Get driver data
-            onValue(ref(database, `drivers/${id}`), (snapshot) => {
-                if (snapshot.exists()) {
-                    const driver = snapshot.val();
-                    
-                    // Fill edit form
+            }
+            else if (table === 'driversTable') {
+                const doc = await db.collection('drivers').doc(id).get();
+                if (doc.exists) {
+                    const driver = doc.data();
                     document.getElementById('editDriverId').value = id;
                     document.getElementById('editDriverName').value = driver.name;
                     document.getElementById('editLicenseNumber').value = driver.licenseNumber;
                     document.getElementById('editDriverAge').value = driver.age;
                     document.getElementById('editDriverAddress').value = driver.address;
-                    
-                    // Show modal
                     document.getElementById('editDriverModal').style.display = 'block';
                 }
-            });
-        } else if (table === 'hiresTable') {
-            // Get hire data
-            onValue(ref(database, `hires/${id}`), (snapshot) => {
-                if (snapshot.exists()) {
-                    const hire = snapshot.val();
-                    
-                    // Fill edit form
+            }
+            else if (table === 'hiresTable') {
+                const doc = await db.collection('hires').doc(id).get();
+                if (doc.exists) {
+                    const hire = doc.data();
                     document.getElementById('editHireId').value = id;
-                    
-                    // Set vehicle dropdown (need to wait for options to populate)
-                    setTimeout(() => {
-                        document.getElementById('editHireVehicle').value = hire.vehicleId;
-                    }, 100);
-                    
                     document.getElementById('editHireMonth').value = hire.month;
                     document.getElementById('editFromLocation').value = hire.fromLocation;
                     document.getElementById('editToLocation').value = hire.toLocation;
@@ -515,111 +338,175 @@ document.addEventListener('click', (e) => {
                     document.getElementById('editFuelPricePerLiter').value = hire.fuelPricePerLiter;
                     document.getElementById('editHireDate').value = hire.hireDate;
                     
-                    // Set driver dropdown if exists
-                    if (hire.driverId) {
-                        setTimeout(() => {
+                    // Set dropdowns after a small delay to ensure options are loaded
+                    setTimeout(() => {
+                        document.getElementById('editHireVehicle').value = hire.vehicleId;
+                        if (hire.driverId) {
                             document.getElementById('editHireDriver').value = hire.driverId;
-                        }, 100);
-                    }
+                        }
+                    }, 100);
                     
-                    // Show modal
                     document.getElementById('editHireModal').style.display = 'block';
                 }
-            });
+            }
+        } catch (error) {
+            console.error("Error loading document for editing:", error);
+            alert("Failed to load record for editing. Please check console for details.");
         }
     }
 });
 
 // Edit form submissions
-document.getElementById('editVehicleForm').addEventListener('submit', (e) => {
+document.getElementById('editVehicleForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    const id = document.getElementById('editVehicleId').value;
-    const vehicleNumber = document.getElementById('editVehicleNumber').value;
-    const vehicleSize = document.getElementById('editVehicleSize').value;
-    const perKmPrice = parseFloat(document.getElementById('editPerKmPrice').value);
-    const ownership = document.getElementById('editOwnership').value;
-    
-    update(ref(database, `vehicles/${id}`), {
-        vehicleNumber,
-        vehicleSize,
-        perKmPrice,
-        ownership
-    });
-    
-    document.getElementById('editVehicleModal').style.display = 'none';
+    try {
+        const id = document.getElementById('editVehicleId').value;
+        const updates = {
+            vehicleNumber: document.getElementById('editVehicleNumber').value,
+            vehicleSize: document.getElementById('editVehicleSize').value,
+            perKmPrice: parseFloat(document.getElementById('editPerKmPrice').value),
+            ownership: document.getElementById('editOwnership').value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await db.collection('vehicles').doc(id).update(updates);
+        document.getElementById('editVehicleModal').style.display = 'none';
+    } catch (error) {
+        console.error("Error updating vehicle:", error);
+        alert("Failed to update vehicle. Please check console for details.");
+    }
 });
 
-document.getElementById('editDriverForm').addEventListener('submit', (e) => {
+document.getElementById('editDriverForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    const id = document.getElementById('editDriverId').value;
-    const name = document.getElementById('editDriverName').value;
-    const licenseNumber = document.getElementById('editLicenseNumber').value;
-    const age = parseInt(document.getElementById('editDriverAge').value);
-    const address = document.getElementById('editDriverAddress').value;
-    
-    update(ref(database, `drivers/${id}`), {
-        name,
-        licenseNumber,
-        age,
-        address
-    });
-    
-    document.getElementById('editDriverModal').style.display = 'none';
+    try {
+        const id = document.getElementById('editDriverId').value;
+        const updates = {
+            name: document.getElementById('editDriverName').value,
+            licenseNumber: document.getElementById('editLicenseNumber').value,
+            age: parseInt(document.getElementById('editDriverAge').value),
+            address: document.getElementById('editDriverAddress').value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await db.collection('drivers').doc(id).update(updates);
+        document.getElementById('editDriverModal').style.display = 'none';
+    } catch (error) {
+        console.error("Error updating driver:", error);
+        alert("Failed to update driver. Please check console for details.");
+    }
 });
 
-document.getElementById('editHireForm').addEventListener('submit', (e) => {
+document.getElementById('editHireForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    const id = document.getElementById('editHireId').value;
-    const vehicleId = document.getElementById('editHireVehicle').value;
-    const month = document.getElementById('editHireMonth').value;
-    const fromLocation = document.getElementById('editFromLocation').value;
-    const toLocation = document.getElementById('editToLocation').value;
-    const distance = parseFloat(document.getElementById('editDistance').value);
-    const fuelLiters = parseFloat(document.getElementById('editFuelLiters').value);
-    const fuelPricePerLiter = parseFloat(document.getElementById('editFuelPricePerLiter').value);
-    const hireDate = document.getElementById('editHireDate').value;
-    const driverId = document.getElementById('editHireDriver').value || null;
-    
-    // Get vehicle details to calculate hire amount
-    const vehicleRef = ref(database, `vehicles/${vehicleId}`);
-    onValue(vehicleRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const vehicle = snapshot.val();
-            const hireAmount = distance * vehicle.perKmPrice;
-            const fuelCost = fuelLiters * fuelPricePerLiter;
-            
-            update(ref(database, `hires/${id}`), {
-                vehicleId,
-                vehicleNumber: vehicle.vehicleNumber,
-                month,
-                fromLocation,
-                toLocation,
-                distance,
-                fuelLiters,
-                fuelPricePerLiter,
-                fuelCost,
-                perKmPrice: vehicle.perKmPrice,
-                hireAmount,
-                hireDate,
-                driverId
+    try {
+        const id = document.getElementById('editHireId').value;
+        const vehicleId = document.getElementById('editHireVehicle').value;
+        
+        const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
+        if (!vehicleDoc.exists) {
+            throw new Error("Selected vehicle not found");
+        }
+
+        const vehicle = vehicleDoc.data();
+        const updates = {
+            vehicleId: vehicleId,
+            vehicleNumber: vehicle.vehicleNumber,
+            month: document.getElementById('editHireMonth').value,
+            fromLocation: document.getElementById('editFromLocation').value,
+            toLocation: document.getElementById('editToLocation').value,
+            distance: parseFloat(document.getElementById('editDistance').value),
+            fuelLiters: parseFloat(document.getElementById('editFuelLiters').value),
+            fuelPricePerLiter: parseFloat(document.getElementById('editFuelPricePerLiter').value),
+            perKmPrice: vehicle.perKmPrice,
+            hireDate: document.getElementById('editHireDate').value,
+            driverId: document.getElementById('editHireDriver').value || null,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        updates.fuelCost = updates.fuelLiters * updates.fuelPricePerLiter;
+        updates.hireAmount = updates.distance * updates.perKmPrice;
+        
+        await db.collection('hires').doc(id).update(updates);
+        document.getElementById('editHireModal').style.display = 'none';
+    } catch (error) {
+        console.error("Error updating hire:", error);
+        alert("Failed to update hire record. Please check console for details.");
+    }
+});
+
+// Filter functionality
+document.getElementById('applyFilter').addEventListener('click', async () => {
+    try {
+        const month = document.getElementById('filterMonth').value;
+        const vehicle = document.getElementById('filterVehicle').value;
+        
+        let query = db.collection('hires');
+        
+        if (month !== 'All') {
+            query = query.where('month', '==', month);
+        }
+        if (vehicle !== 'All') {
+            query = query.where('vehicleId', '==', vehicle);
+        }
+        
+        const snapshot = await query.orderBy('createdAt').get();
+        const hiresList = document.getElementById('hiresList');
+        hiresList.innerHTML = '';
+        let totalFuel = 0;
+        let totalHire = 0;
+        
+        if (!snapshot.empty) {
+            // Get all drivers for display
+            const driversSnapshot = await db.collection('drivers').get();
+            const drivers = {};
+            driversSnapshot.forEach(doc => {
+                drivers[doc.id] = doc.data().name;
             });
             
-            document.getElementById('editHireModal').style.display = 'none';
+            snapshot.forEach(doc => {
+                const hire = doc.data();
+                totalFuel += hire.fuelCost || 0;
+                totalHire += hire.hireAmount || 0;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${hire.hireDate}</td>
+                    <td>${hire.vehicleNumber}</td>
+                    <td>${hire.fromLocation}</td>
+                    <td>${hire.toLocation}</td>
+                    <td>${hire.distance.toFixed(1)}</td>
+                    <td>${hire.fuelLiters.toFixed(1)}</td>
+                    <td>${hire.fuelPricePerLiter.toFixed(2)}</td>
+                    <td>${hire.fuelCost.toFixed(2)}</td>
+                    <td>${hire.perKmPrice.toFixed(2)}</td>
+                    <td>${hire.hireAmount.toFixed(2)}</td>
+                    <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
+                    <td>
+                        <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
+                        <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
+                    </td>
+                `;
+                hiresList.appendChild(tr);
+            });
+        } else {
+            hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
         }
-    }, { onlyOnce: true });
+        
+        document.getElementById('totalFuelCost').textContent = totalFuel.toFixed(2);
+        document.getElementById('totalHireAmount').textContent = totalHire.toFixed(2);
+        document.getElementById('netProfit').textContent = (totalHire - totalFuel).toFixed(2);
+    } catch (error) {
+        console.error("Error filtering hires:", error);
+        alert("Failed to filter hire records. Please check console for details.");
+    }
 });
 
-// Close modals when clicking X
+// Close modals
 document.querySelectorAll('.close').forEach(closeBtn => {
     closeBtn.addEventListener('click', () => {
         closeBtn.closest('.modal').style.display = 'none';
     });
 });
 
-// Close modals when clicking outside
 window.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal')) {
         e.target.style.display = 'none';
@@ -628,15 +515,16 @@ window.addEventListener('click', (e) => {
 
 // Initialize the app
 function initApp() {
-    // Populate dropdowns
-    populateVehicleDropdowns();
-    populateDriverDropdowns();
+    // Load all data
+    loadVehicles();
+    loadDrivers();
+    loadHires();
     
-    // Set current date as default for hire date
+    // Set current date as default
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('hireDate').value = today;
     document.getElementById('editHireDate').value = today;
 }
 
-// Initialize when DOM is loaded
+// Start the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', initApp);
