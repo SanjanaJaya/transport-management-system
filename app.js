@@ -47,10 +47,11 @@ vehicleForm.addEventListener('submit', async (e) => {
         };
         await db.collection('vehicles').add(vehicle);
         vehicleForm.reset();
-        alert('Vehicle added successfully!');
+        // Replaced alert with a custom message box for better UI
+        showMessage('Vehicle added successfully!', 'success');
     } catch (error) {
         console.error("Error adding vehicle:", error);
-        alert("Failed to add vehicle. Please check console for details.");
+        showMessage("Failed to add vehicle. Please check console for details.", 'error');
     }
 });
 
@@ -68,10 +69,11 @@ driverForm.addEventListener('submit', async (e) => {
         };
         await db.collection('drivers').add(driver);
         driverForm.reset();
-        alert('Driver added successfully!');
+        // Replaced alert with a custom message box for better UI
+        showMessage('Driver added successfully!', 'success');
     } catch (error) {
         console.error("Error adding driver:", error);
-        alert("Failed to add driver. Please check console for details.");
+        showMessage("Failed to add driver. Please check console for details.", 'error');
     }
 });
 
@@ -122,10 +124,11 @@ hireForm.addEventListener('submit', async (e) => {
         
         await db.collection('hires').add(hire);
         hireForm.reset();
-        alert('Hire record added successfully!');
+        // Replaced alert with a custom message box for better UI
+        showMessage('Hire record added successfully!', 'success');
     } catch (error) {
         console.error("Error adding hire:", error);
-        alert("Failed to add hire record. Please check console for details.");
+        showMessage("Failed to add hire record. Please check console for details.", 'error');
     }
 });
 
@@ -312,7 +315,8 @@ document.addEventListener('click', async (e) => {
         const id = e.target.getAttribute('data-id');
         const table = e.target.closest('table').id;
         
-        if (confirm('Are you sure you want to delete this record?')) {
+        // Replaced confirm with a custom message box for better UI
+        showConfirmation('Are you sure you want to delete this record?', async () => {
             try {
                 let collectionName;
                 if (table === 'vehiclesTable') collectionName = 'vehicles';
@@ -321,13 +325,13 @@ document.addEventListener('click', async (e) => {
                 
                 if (collectionName) {
                     await db.collection(collectionName).doc(id).delete();
-                    alert('Record deleted successfully!');
+                    showMessage('Record deleted successfully!', 'success');
                 }
             } catch (error) {
                 console.error("Error deleting document:", error);
-                alert("Failed to delete record. Please check console for details.");
+                showMessage("Failed to delete record. Please check console for details.", 'error');
             }
-        }
+        });
     }
     
     if (e.target.classList.contains('edit-btn')) {
@@ -384,7 +388,7 @@ document.addEventListener('click', async (e) => {
             }
         } catch (error) {
             console.error("Error loading document for editing:", error);
-            alert("Failed to load record for editing. Please check console for details.");
+            showMessage("Failed to load record for editing. Please check console for details.", 'error');
         }
     }
 });
@@ -403,10 +407,10 @@ document.getElementById('editVehicleForm').addEventListener('submit', async (e) 
         };
         await db.collection('vehicles').doc(id).update(updates);
         document.getElementById('editVehicleModal').style.display = 'none';
-        alert('Vehicle updated successfully!');
+        showMessage('Vehicle updated successfully!', 'success');
     } catch (error) {
         console.error("Error updating vehicle:", error);
-        alert("Failed to update vehicle. Please check console for details.");
+        showMessage("Failed to update vehicle. Please check console for details.", 'error');
     }
 });
 
@@ -423,10 +427,10 @@ document.getElementById('editDriverForm').addEventListener('submit', async (e) =
         };
         await db.collection('drivers').doc(id).update(updates);
         document.getElementById('editDriverModal').style.display = 'none';
-        alert('Driver updated successfully!');
+        showMessage('Driver updated successfully!', 'success');
     } catch (error) {
         console.error("Error updating driver:", error);
-        alert("Failed to update driver. Please check console for details.");
+        showMessage("Failed to update driver. Please check console for details.", 'error');
     }
 });
 
@@ -480,10 +484,10 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
         
         await db.collection('hires').doc(id).update(updates);
         document.getElementById('editHireModal').style.display = 'none';
-        alert('Hire record updated successfully!');
+        showMessage('Hire record updated successfully!', 'success');
     } catch (error) {
         console.error("Error updating hire:", error);
-        alert("Failed to update hire record. Please check console for details.");
+        showMessage("Failed to update hire record. Please check console for details.", 'error');
     }
 });
 
@@ -557,6 +561,83 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
     }
 });
 
+// Custom message box and confirmation dialog
+function showMessage(message, type) {
+    let messageBox = document.getElementById('messageBox');
+    if (!messageBox) {
+        messageBox = document.createElement('div');
+        messageBox.id = 'messageBox';
+        messageBox.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            color: white;
+            z-index: 1001;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        `;
+        document.body.appendChild(messageBox);
+    }
+
+    messageBox.textContent = message;
+    if (type === 'success') {
+        messageBox.style.backgroundColor = '#27ae60';
+    } else if (type === 'error') {
+        messageBox.style.backgroundColor = '#e74c3c';
+    } else {
+        messageBox.style.backgroundColor = '#3498db'; // Default blue
+    }
+
+    messageBox.style.opacity = '1';
+    setTimeout(() => {
+        messageBox.style.opacity = '0';
+    }, 3000); // Message disappears after 3 seconds
+}
+
+function showConfirmation(message, onConfirm) {
+    let confirmationModal = document.getElementById('confirmationModal');
+    if (!confirmationModal) {
+        confirmationModal = document.createElement('div');
+        confirmationModal.id = 'confirmationModal';
+        confirmationModal.classList.add('modal');
+        confirmationModal.innerHTML = `
+            <div class="modal-content">
+                <p id="confirmationMessage"></p>
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+                    <button id="confirmYes" class="action-btn edit-btn" style="background-color: #27ae60; color: white;">Yes</button>
+                    <button id="confirmNo" class="action-btn delete-btn" style="background-color: #e74c3c; color: white;">No</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(confirmationModal);
+
+        document.getElementById('confirmYes').addEventListener('click', () => {
+            onConfirm();
+            confirmationModal.style.display = 'none';
+        });
+
+        document.getElementById('confirmNo').addEventListener('click', () => {
+            confirmationModal.style.display = 'none';
+        });
+
+        // Close when clicking outside the modal content
+        confirmationModal.addEventListener('click', (e) => {
+            if (e.target === confirmationModal) {
+                confirmationModal.style.display = 'none';
+            }
+        });
+    }
+
+    document.getElementById('confirmationMessage').textContent = message;
+    confirmationModal.style.display = 'block';
+}
+
+
 // Close modals
 document.querySelectorAll('.close').forEach(closeBtn => {
     closeBtn.addEventListener('click', () => {
@@ -565,7 +646,7 @@ document.querySelectorAll('.close').forEach(closeBtn => {
 });
 
 window.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal')) {
+    if (e.target.classList.contains('modal') && e.target.id !== 'confirmationModal') { // Exclude confirmation modal
         e.target.style.display = 'none';
     }
 });

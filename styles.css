@@ -3,67 +3,117 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Arial', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 body {
-    background-color: #f5f5f5;
-    color: #333;
+    background-color: #1a1a1a; /* Darker background */
+    color: #e0e0e0; /* Lighter text color */
     line-height: 1.6;
+    display: flex; /* Flexbox for full page layout */
+    flex-direction: column; /* Stack header, app-container, footer vertically */
+    min-height: 100vh; /* Ensure body takes full viewport height */
 }
 
 header {
-    background-color: #2c3e50;
+    background-color: #0d0d0d; /* Changed to very dark grey/black */
     color: white;
     padding: 1rem 0;
     text-align: center;
+    display: flex; /* Added flex for logo alignment */
+    align-items: center;
+    justify-content: center;
+    border-bottom-left-radius: 10px; /* Rounded corners */
+    border-bottom-right-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+header .logo {
+    height: 150px; /* Made logo even bigger */
+    margin-right: 25px; /* Increased margin */
+    border-radius: 50%; /* Make logo round */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* More prominent shadow for logo */
 }
 
 header h1 {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
+    font-size: 3.5rem; /* Larger font size for main title */
+    margin-bottom: 0; /* Removed bottom margin as H2 is gone */
+    color: #e74c3c; /* Changed "Jayasooriya Enterprises" color to red */
 }
 
-header h2 {
-    font-size: 1.2rem;
-    font-weight: normal;
-}
-
-nav {
+/* App Container for Sidebar Layout */
+.app-container {
     display: flex;
-    background-color: #34495e;
-    padding: 0.5rem;
+    flex: 1; /* Allow app container to grow and take available space */
+    width: 100%; /* Take full width of its parent (body) */
+    max-width: 1400px; /* Set to a more normal desktop width */
+    margin: 1rem auto; /* Center the container with some margin */
+    background-color: #1f1f1f; /* Darker background for the main app area */
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    overflow: hidden; /* Hide overflow from rounded corners */
 }
 
-nav button {
-    flex: 1;
-    padding: 0.8rem;
+/* Sidebar Navigation */
+nav.sidebar {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    background-color: #222; /* Changed to dark grey */
+    padding: 1.5rem 0.5rem; /* Padding for sidebar */
+    min-width: 220px; /* Slightly increased fixed width for sidebar */
+    border-right: 1px solid #333; /* Separator line */
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    border-top-left-radius: 10px; /* Match app-container radius */
+    border-bottom-left-radius: 10px;
+}
+
+nav.sidebar button {
+    width: 100%; /* Buttons take full width of sidebar */
+    padding: 1.3rem 1.2rem; /* Increased padding for vertical buttons */
     background-color: transparent;
     border: none;
-    color: white;
+    color: #e0e0e0; /* Lighter text color */
     cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s;
+    font-size: 1.3rem; /* Larger font size */
+    text-align: left; /* Align text to the left */
+    transition: background-color 0.3s, color 0.3s, transform 0.2s;
+    border-radius: 8px; /* Rounded button corners */
+    margin-bottom: 12px; /* Increased space between buttons */
 }
 
-nav button:hover {
-    background-color: #2c3e50;
+nav.sidebar button:last-child {
+    margin-bottom: 0; /* No margin for the last button */
 }
 
-nav button.active {
-    background-color: #2980b9;
+nav.sidebar button:hover {
+    background-color: #333; /* Darker hover background */
+    color: #f0f0f0;
+    transform: translateX(8px); /* More pronounced slide effect */
+}
+
+nav.sidebar button.active {
+    background-color: #e74c3c; /* Red active tab */
     font-weight: bold;
+    color: white;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3); /* Inner shadow for active state */
+    transform: translateX(0); /* Reset transform for active */
 }
 
-main {
-    padding: 1rem;
-    max-width: 1200px;
-    margin: 0 auto;
+/* Main Content Area */
+main.content-area {
+    flex: 1; /* Main content area takes remaining space */
+    padding: 2rem; /* Increased padding for main content */
+    overflow-y: auto; /* Enable scrolling for content if it overflows */
 }
 
 section {
     display: none;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem; /* Increased margin */
+    background-color: #2a2a2a; /* Darker section background */
+    padding: 2.5rem; /* Increased padding */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* More prominent shadow */
 }
 
 section.active {
@@ -71,211 +121,296 @@ section.active {
 }
 
 h2 {
-    margin-bottom: 1rem;
-    color: #2c3e50;
-    border-bottom: 2px solid #2980b9;
-    padding-bottom: 0.5rem;
+    margin-bottom: 1.8rem; /* Increased margin */
+    color: #e74c3c; /* Red heading */
+    border-bottom: 3px solid #c0392b; /* Thicker darker red border */
+    padding-bottom: 1rem; /* Increased padding */
+    font-size: 2.2rem; /* Larger font size */
 }
 
 h3 {
-    margin: 1rem 0;
-    color: #34495e;
+    margin: 1.8rem 0 1.2rem; /* Adjusted margin */
+    color: #f0f0f0; /* Lighter sub-heading color */
+    font-size: 1.6rem;
 }
 
 /* Form Styles */
 .form-container {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem;
+    background-color: #3a3a3a; /* Darker form background */
+    padding: 2.2rem; /* Increased padding */
+    border-radius: 10px; /* More rounded corners */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    margin-bottom: 2.2rem;
 }
 
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.4rem; /* Increased margin */
 }
 
 label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.7rem; /* Increased margin */
     font-weight: bold;
+    color: #e0e0e0; /* Lighter label color */
 }
 
 input, select, textarea {
     width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
+    padding: 1.1rem; /* Increased padding */
+    border: 1px solid #666; /* Slightly lighter dark border */
+    border-radius: 7px; /* More rounded corners */
+    font-size: 1.15rem; /* Slightly larger font size */
+    background-color: #4a4a4a; /* Darker input background */
+    color: #f0f0f0; /* Lighter input text */
 }
 
 textarea {
-    min-height: 100px;
+    min-height: 130px; /* Increased min-height */
     resize: vertical;
 }
 
 button[type="submit"] {
-    background-color: #2980b9;
+    background-color: #e74c3c; /* Red submit button */
     color: white;
     border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 4px;
+    padding: 1.1rem 2.2rem; /* Increased padding */
+    border-radius: 8px; /* Rounded corners */
     cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s;
+    font-size: 1.15rem; /* Larger font size */
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 button[type="submit"]:hover {
-    background-color: #3498db;
+    background-color: #c0392b; /* Darker red on hover */
+    transform: translateY(-3px); /* More pronounced lift effect */
 }
 
 /* Table Styles */
 .table-container {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background-color: #3a3a3a; /* Darker table container background */
+    padding: 2.2rem; /* Increased padding */
+    border-radius: 10px; /* More rounded corners */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
     overflow-x: auto;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1rem;
+    margin-top: 1.8rem; /* Increased margin */
 }
 
 th, td {
-    padding: 0.8rem;
+    padding: 1.1rem; /* Increased padding */
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #555; /* Darker border */
+    color: #e0e0e0; /* Lighter text color */
 }
 
 th {
-    background-color: #f2f2f2;
+    background-color: #4a4a4a; /* Darker header background */
     font-weight: bold;
+    color: #f0f0f0;
 }
 
 tr:hover {
-    background-color: #f5f5f5;
+    background-color: #444; /* Darker hover background */
 }
 
 .action-btn {
-    padding: 0.3rem 0.6rem;
-    margin-right: 0.3rem;
+    padding: 0.7rem 1.1rem; /* Increased padding */
+    margin-right: 0.6rem; /* Increased margin */
     border: none;
-    border-radius: 3px;
+    border-radius: 6px; /* Rounded corners */
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1.05rem; /* Slightly larger font size */
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .edit-btn {
+    background-color: #f1c40f; /* Yellow edit button */
+    color: #333;
+}
+
+.edit-btn:hover {
     background-color: #f39c12;
-    color: white;
+    transform: translateY(-2px);
 }
 
 .delete-btn {
-    background-color: #e74c3c;
+    background-color: #e74c3c; /* Red delete button */
     color: white;
+}
+
+.delete-btn:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
 }
 
 /* Filter Styles */
 .filter-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 1.8rem; /* Increased gap */
+    margin-bottom: 1.8rem; /* Increased margin */
     align-items: center;
+    background-color: #3a3a3a;
+    padding: 1.8rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .filter-container label {
     margin-bottom: 0;
+    color: #e0e0e0;
 }
 
 .filter-container select {
     width: auto;
-    min-width: 150px;
+    min-width: 200px; /* Increased min-width */
+    background-color: #4a4a4a;
+    color: #f0f0f0;
 }
 
 #applyFilter {
-    background-color: #27ae60;
+    background-color: #e74c3c; /* Red filter button */
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 1rem 1.8rem; /* Increased padding */
+    border-radius: 7px; /* Rounded corners */
     cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 #applyFilter:hover {
-    background-color: #2ecc71;
+    background-color: #c0392b; /* Darker red on hover */
+    transform: translateY(-3px);
 }
 
 /* Footer Styles */
 footer {
-    background-color: #2c3e50;
+    background-color: #0d0d0d; /* Changed to very dark grey/black */
     color: white;
     text-align: center;
-    padding: 1rem 0;
-    margin-top: 2rem;
+    padding: 1.8rem 0; /* Increased padding */
+    margin-top: auto; /* Push footer to the bottom */
+    border-top-left-radius: 10px; /* Rounded corners */
+    border-top-right-radius: 10px;
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 /* Modal Styles */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 1000; /* Higher z-index */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+    backdrop-filter: blur(8px); /* More blurred background */
 }
 
 .modal-content {
-    background-color: #fefefe;
-    margin: 10% auto;
-    padding: 2rem;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 600px;
-    border-radius: 5px;
+    background-color: #3a3a3a; /* Darker modal background */
+    margin: 6% auto; /* Adjusted margin for better centering */
+    padding: 3rem; /* Increased padding */
+    border: 1px solid #555; /* Darker border */
+    width: 90%;
+    max-width: 750px; /* Increased max-width */
+    border-radius: 12px; /* More rounded corners */
     position: relative;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5); /* More prominent shadow */
 }
 
 .close {
     color: #aaa;
     float: right;
-    font-size: 1.5rem;
+    font-size: 2.2rem; /* Larger close button */
     font-weight: bold;
     cursor: pointer;
     position: absolute;
-    right: 1rem;
-    top: 0.5rem;
+    right: 1.8rem; /* Adjusted position */
+    top: 1.2rem; /* Adjusted position */
+    transition: color 0.3s;
 }
 
 .close:hover {
-    color: black;
+    color: white; /* White on hover */
 }
 
 /* Net Total Row */
 .net-total {
     font-weight: bold;
-    background-color: #f2f2f2;
+    background-color: #4a4a4a; /* Darker background for net total */
+    color: #f0f0f0;
 }
 
 .net-total td {
-    border-top: 2px solid #333;
+    border-top: 2px solid #666; /* Thicker border */
 }
 
 /* Responsive Styles */
 @media (max-width: 768px) {
-    nav {
-        flex-direction: column;
+    header h1 {
+        font-size: 1.8rem;
+    }
+    header .logo {
+        height: 70px; /* Adjust logo size for smaller screens */
+        margin-right: 10px;
+    }
+
+    .app-container {
+        flex-direction: column; /* Stack sidebar and content vertically */
+        margin: 0.5rem auto;
+        border-radius: 0; /* Remove app-container radius on small screens */
+        box-shadow: none; /* Remove app-container shadow on small screens */
+    }
+
+    nav.sidebar {
+        min-width: unset; /* Remove fixed width */
+        width: 100%; /* Take full width */
+        flex-direction: row; /* Buttons side-by-side */
+        padding: 0.8rem 0.5rem; /* Adjusted padding */
+        border-right: none;
+        border-bottom: 1px solid #444; /* Add bottom border */
+        border-radius: 0; /* Remove specific radii for full width */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    nav.sidebar button {
+        flex: 1; /* Distribute space evenly */
+        text-align: center; /* Center text */
+        margin: 0 5px; /* Add horizontal margin */
+        padding: 0.9rem; /* Adjusted padding */
+        font-size: 1rem;
+    }
+    nav.sidebar button:hover {
+        transform: none; /* Remove slide effect */
+    }
+    nav.sidebar button.active {
+        transform: none; /* Reset transform for active */
+    }
+    
+    main.content-area {
+        padding: 1rem; /* Adjusted padding */
+    }
+
+    section {
+        padding: 1.5rem; /* Adjusted padding */
     }
     
     .filter-container {
         flex-direction: column;
         align-items: flex-start;
+        padding: 1rem;
     }
     
     .filter-container select {
@@ -284,6 +419,77 @@ footer {
     
     .modal-content {
         width: 95%;
-        margin: 20% auto;
+        margin: 15% auto;
+        padding: 1.5rem;
+    }
+
+    .form-container, .table-container {
+        padding: 1.5rem; /* Adjusted padding */
+    }
+
+    h2 {
+        font-size: 1.6rem;
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.7rem;
+    }
+
+    h3 {
+        font-size: 1.3rem;
+        margin: 1.2rem 0 0.8rem;
+    }
+
+    input, select, textarea {
+        font-size: 1rem;
+        padding: 0.9rem;
+    }
+
+    button[type="submit"] {
+        font-size: 1rem;
+        padding: 0.9rem 1.8rem;
+    }
+    
+    .action-btn {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.9rem;
+    }
+
+    #applyFilter {
+        font-size: 1rem;
+        padding: 0.7rem 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.3rem;
+    }
+    header .logo {
+        height: 50px;
+        margin-right: 8px;
+    }
+    nav.sidebar button {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+        margin: 0 3px;
+    }
+    main.content-area {
+        padding: 0.5rem;
+    }
+    section {
+        padding: 1rem;
+    }
+    .modal-content {
+        margin: 10% auto;
+        padding: 1rem;
+    }
+    h2 {
+        font-size: 1.4rem;
+    }
+    h3 {
+        font-size: 1.1rem;
+    }
+    input, select, textarea, button[type="submit"], .action-btn, #applyFilter {
+        font-size: 0.85rem;
+        padding: 0.7rem;
     }
 }
