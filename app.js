@@ -47,6 +47,7 @@ vehicleForm.addEventListener('submit', async (e) => {
         };
         await db.collection('vehicles').add(vehicle);
         vehicleForm.reset();
+        alert('Vehicle added successfully!');
     } catch (error) {
         console.error("Error adding vehicle:", error);
         alert("Failed to add vehicle. Please check console for details.");
@@ -67,17 +68,22 @@ driverForm.addEventListener('submit', async (e) => {
         };
         await db.collection('drivers').add(driver);
         driverForm.reset();
+        alert('Driver added successfully!');
     } catch (error) {
         console.error("Error adding driver:", error);
         alert("Failed to add driver. Please check console for details.");
     }
 });
 
-// Hire Management
+// Hire Management - Fuel fields completely optional
 const hireForm = document.getElementById('hireForm');
 hireForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
+        // Remove required attribute from fuel fields
+        document.getElementById('fuelLiters').removeAttribute('required');
+        document.getElementById('fuelPricePerLiter').removeAttribute('required');
+        
         const vehicleId = document.getElementById('hireVehicle').value;
         const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
         
@@ -93,19 +99,30 @@ hireForm.addEventListener('submit', async (e) => {
             fromLocation: document.getElementById('fromLocation').value,
             toLocation: document.getElementById('toLocation').value,
             distance: parseFloat(document.getElementById('distance').value),
-            fuelLiters: parseFloat(document.getElementById('fuelLiters').value),
-            fuelPricePerLiter: parseFloat(document.getElementById('fuelPricePerLiter').value),
             perKmPrice: vehicle.perKmPrice,
             hireDate: document.getElementById('hireDate').value,
             driverId: document.getElementById('hireDriver').value || null,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            hireAmount: parseFloat(document.getElementById('distance').value) * vehicle.perKmPrice
         };
         
-        hire.fuelCost = hire.fuelLiters * hire.fuelPricePerLiter;
-        hire.hireAmount = hire.distance * hire.perKmPrice;
+        // Only add fuel data if fields are not empty
+        const fuelLiters = document.getElementById('fuelLiters').value;
+        const fuelPricePerLiter = document.getElementById('fuelPricePerLiter').value;
+        
+        if (fuelLiters) {
+            hire.fuelLiters = parseFloat(fuelLiters);
+        }
+        if (fuelPricePerLiter) {
+            hire.fuelPricePerLiter = parseFloat(fuelPricePerLiter);
+        }
+        if (fuelLiters && fuelPricePerLiter) {
+            hire.fuelCost = hire.fuelLiters * hire.fuelPricePerLiter;
+        }
         
         await db.collection('hires').add(hire);
         hireForm.reset();
+        alert('Hire record added successfully!');
     } catch (error) {
         console.error("Error adding hire:", error);
         alert("Failed to add hire record. Please check console for details.");
@@ -117,6 +134,11 @@ function loadVehicles() {
     db.collection('vehicles').orderBy('createdAt').onSnapshot((snapshot) => {
         const vehiclesList = document.getElementById('vehiclesList');
         vehiclesList.innerHTML = '';
+        
+        if (snapshot.empty) {
+            vehiclesList.innerHTML = '<tr><td colspan="5">No vehicles found</td></tr>';
+            return;
+        }
         
         snapshot.forEach(doc => {
             const vehicle = doc.data();
@@ -134,10 +156,10 @@ function loadVehicles() {
             vehiclesList.appendChild(tr);
         });
         
-        // Update vehicle dropdowns
         populateVehicleDropdowns(snapshot);
     }, error => {
         console.error("Error loading vehicles:", error);
+        document.getElementById('vehiclesList').innerHTML = '<tr><td colspan="5">Error loading vehicles</td></tr>';
     });
 }
 
@@ -146,6 +168,11 @@ function loadDrivers() {
     db.collection('drivers').orderBy('createdAt').onSnapshot((snapshot) => {
         const driversList = document.getElementById('driversList');
         driversList.innerHTML = '';
+        
+        if (snapshot.empty) {
+            driversList.innerHTML = '<tr><td colspan="5">No drivers found</td></tr>';
+            return;
+        }
         
         snapshot.forEach(doc => {
             const driver = doc.data();
@@ -163,14 +190,14 @@ function loadDrivers() {
             driversList.appendChild(tr);
         });
         
-        // Update driver dropdowns
         populateDriverDropdowns(snapshot);
     }, error => {
         console.error("Error loading drivers:", error);
+        document.getElementById('driversList').innerHTML = '<tr><td colspan="5">Error loading drivers</td></tr>';
     });
 }
 
-// Load Hires with real-time updates
+// Load Hires with real-time updates (Fuel fields optional)
 function loadHires() {
     db.collection('hires').orderBy('createdAt').onSnapshot(async (snapshot) => {
         const hiresList = document.getElementById('hiresList');
@@ -178,50 +205,60 @@ function loadHires() {
         let totalFuel = 0;
         let totalHire = 0;
         
-        if (!snapshot.empty) {
-            // Get all drivers for display
-            const driversSnapshot = await db.collection('drivers').get();
-            const drivers = {};
-            driversSnapshot.forEach(doc => {
-                drivers[doc.id] = doc.data().name;
-            });
-            
-            snapshot.forEach(doc => {
-                const hire = doc.data();
-                totalFuel += hire.fuelCost || 0;
-                totalHire += hire.hireAmount || 0;
-                
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${hire.hireDate}</td>
-                    <td>${hire.vehicleNumber}</td>
-                    <td>${hire.fromLocation}</td>
-                    <td>${hire.toLocation}</td>
-                    <td>${hire.distance.toFixed(1)}</td>
-                    <td>${hire.fuelLiters.toFixed(1)}</td>
-                    <td>${hire.fuelPricePerLiter.toFixed(2)}</td>
-                    <td>${hire.fuelCost.toFixed(2)}</td>
-                    <td>${hire.perKmPrice.toFixed(2)}</td>
-                    <td>${hire.hireAmount.toFixed(2)}</td>
-                    <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
-                    <td>
-                        <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
-                        <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
-                    </td>
-                `;
-                hiresList.appendChild(tr);
-            });
-        } else {
+        if (snapshot.empty) {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
+            updateTotals(0, 0);
+            return;
         }
         
-        // Update totals
-        document.getElementById('totalFuelCost').textContent = totalFuel.toFixed(2);
-        document.getElementById('totalHireAmount').textContent = totalHire.toFixed(2);
-        document.getElementById('netProfit').textContent = (totalHire - totalFuel).toFixed(2);
+        // Get all drivers for display
+        const driversSnapshot = await db.collection('drivers').get();
+        const drivers = {};
+        driversSnapshot.forEach(doc => {
+            drivers[doc.id] = doc.data().name;
+        });
+        
+        snapshot.forEach(doc => {
+            const hire = doc.data();
+            totalHire += hire.hireAmount || 0;
+            
+            if (hire.fuelCost) {
+                totalFuel += hire.fuelCost;
+            }
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${hire.hireDate}</td>
+                <td>${hire.vehicleNumber}</td>
+                <td>${hire.fromLocation}</td>
+                <td>${hire.toLocation}</td>
+                <td>${hire.distance.toFixed(1)}</td>
+                <td>${hire.fuelLiters ? hire.fuelLiters.toFixed(1) : '-'}</td>
+                <td>${hire.fuelPricePerLiter ? hire.fuelPricePerLiter.toFixed(2) : '-'}</td>
+                <td>${hire.fuelCost ? hire.fuelCost.toFixed(2) : '-'}</td>
+                <td>${hire.perKmPrice.toFixed(2)}</td>
+                <td>${hire.hireAmount.toFixed(2)}</td>
+                <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
+                    <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
+                </td>
+            `;
+            hiresList.appendChild(tr);
+        });
+        
+        updateTotals(totalFuel, totalHire);
     }, error => {
         console.error("Error loading hires:", error);
+        document.getElementById('hiresList').innerHTML = '<tr><td colspan="12">Error loading hire records</td></tr>';
+        updateTotals(0, 0);
     });
+}
+
+function updateTotals(fuelCost, hireAmount) {
+    document.getElementById('totalFuelCost').textContent = fuelCost.toFixed(2);
+    document.getElementById('totalHireAmount').textContent = hireAmount.toFixed(2);
+    document.getElementById('netProfit').textContent = (hireAmount - fuelCost).toFixed(2);
 }
 
 // Populate vehicle dropdowns
@@ -233,7 +270,6 @@ function populateVehicleDropdowns(vehiclesSnapshot) {
     ];
     
     dropdowns.forEach(dropdown => {
-        // Keep the first option
         while (dropdown.options.length > 1) dropdown.remove(1);
         
         if (!vehiclesSnapshot.empty) {
@@ -256,7 +292,6 @@ function populateDriverDropdowns(driversSnapshot) {
     ];
     
     dropdowns.forEach(dropdown => {
-        // Keep the first option
         while (dropdown.options.length > 1) dropdown.remove(1);
         
         if (!driversSnapshot.empty) {
@@ -273,7 +308,6 @@ function populateDriverDropdowns(driversSnapshot) {
 
 // Edit and Delete functionality
 document.addEventListener('click', async (e) => {
-    // Delete buttons
     if (e.target.classList.contains('delete-btn')) {
         const id = e.target.getAttribute('data-id');
         const table = e.target.closest('table').id;
@@ -287,6 +321,7 @@ document.addEventListener('click', async (e) => {
                 
                 if (collectionName) {
                     await db.collection(collectionName).doc(id).delete();
+                    alert('Record deleted successfully!');
                 }
             } catch (error) {
                 console.error("Error deleting document:", error);
@@ -295,7 +330,6 @@ document.addEventListener('click', async (e) => {
         }
     }
     
-    // Edit buttons
     if (e.target.classList.contains('edit-btn')) {
         const id = e.target.getAttribute('data-id');
         const table = e.target.closest('table').id;
@@ -334,11 +368,10 @@ document.addEventListener('click', async (e) => {
                     document.getElementById('editFromLocation').value = hire.fromLocation;
                     document.getElementById('editToLocation').value = hire.toLocation;
                     document.getElementById('editDistance').value = hire.distance;
-                    document.getElementById('editFuelLiters').value = hire.fuelLiters;
-                    document.getElementById('editFuelPricePerLiter').value = hire.fuelPricePerLiter;
                     document.getElementById('editHireDate').value = hire.hireDate;
+                    document.getElementById('editFuelLiters').value = hire.fuelLiters || '';
+                    document.getElementById('editFuelPricePerLiter').value = hire.fuelPricePerLiter || '';
                     
-                    // Set dropdowns after a small delay to ensure options are loaded
                     setTimeout(() => {
                         document.getElementById('editHireVehicle').value = hire.vehicleId;
                         if (hire.driverId) {
@@ -370,6 +403,7 @@ document.getElementById('editVehicleForm').addEventListener('submit', async (e) 
         };
         await db.collection('vehicles').doc(id).update(updates);
         document.getElementById('editVehicleModal').style.display = 'none';
+        alert('Vehicle updated successfully!');
     } catch (error) {
         console.error("Error updating vehicle:", error);
         alert("Failed to update vehicle. Please check console for details.");
@@ -389,6 +423,7 @@ document.getElementById('editDriverForm').addEventListener('submit', async (e) =
         };
         await db.collection('drivers').doc(id).update(updates);
         document.getElementById('editDriverModal').style.display = 'none';
+        alert('Driver updated successfully!');
     } catch (error) {
         console.error("Error updating driver:", error);
         alert("Failed to update driver. Please check console for details.");
@@ -414,19 +449,38 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
             fromLocation: document.getElementById('editFromLocation').value,
             toLocation: document.getElementById('editToLocation').value,
             distance: parseFloat(document.getElementById('editDistance').value),
-            fuelLiters: parseFloat(document.getElementById('editFuelLiters').value),
-            fuelPricePerLiter: parseFloat(document.getElementById('editFuelPricePerLiter').value),
             perKmPrice: vehicle.perKmPrice,
             hireDate: document.getElementById('editHireDate').value,
             driverId: document.getElementById('editHireDriver').value || null,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            hireAmount: parseFloat(document.getElementById('editDistance').value) * vehicle.perKmPrice
         };
         
-        updates.fuelCost = updates.fuelLiters * updates.fuelPricePerLiter;
-        updates.hireAmount = updates.distance * updates.perKmPrice;
+        // Handle optional fuel fields
+        const fuelLiters = document.getElementById('editFuelLiters').value;
+        const fuelPricePerLiter = document.getElementById('editFuelPricePerLiter').value;
+        
+        if (fuelLiters) {
+            updates.fuelLiters = parseFloat(fuelLiters);
+        } else {
+            updates.fuelLiters = firebase.firestore.FieldValue.delete();
+        }
+        
+        if (fuelPricePerLiter) {
+            updates.fuelPricePerLiter = parseFloat(fuelPricePerLiter);
+        } else {
+            updates.fuelPricePerLiter = firebase.firestore.FieldValue.delete();
+        }
+        
+        if (fuelLiters && fuelPricePerLiter) {
+            updates.fuelCost = updates.fuelLiters * updates.fuelPricePerLiter;
+        } else {
+            updates.fuelCost = firebase.firestore.FieldValue.delete();
+        }
         
         await db.collection('hires').doc(id).update(updates);
         document.getElementById('editHireModal').style.display = 'none';
+        alert('Hire record updated successfully!');
     } catch (error) {
         console.error("Error updating hire:", error);
         alert("Failed to update hire record. Please check console for details.");
@@ -454,49 +508,52 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
         let totalFuel = 0;
         let totalHire = 0;
         
-        if (!snapshot.empty) {
-            // Get all drivers for display
-            const driversSnapshot = await db.collection('drivers').get();
-            const drivers = {};
-            driversSnapshot.forEach(doc => {
-                drivers[doc.id] = doc.data().name;
-            });
-            
-            snapshot.forEach(doc => {
-                const hire = doc.data();
-                totalFuel += hire.fuelCost || 0;
-                totalHire += hire.hireAmount || 0;
-                
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${hire.hireDate}</td>
-                    <td>${hire.vehicleNumber}</td>
-                    <td>${hire.fromLocation}</td>
-                    <td>${hire.toLocation}</td>
-                    <td>${hire.distance.toFixed(1)}</td>
-                    <td>${hire.fuelLiters.toFixed(1)}</td>
-                    <td>${hire.fuelPricePerLiter.toFixed(2)}</td>
-                    <td>${hire.fuelCost.toFixed(2)}</td>
-                    <td>${hire.perKmPrice.toFixed(2)}</td>
-                    <td>${hire.hireAmount.toFixed(2)}</td>
-                    <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
-                    <td>
-                        <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
-                        <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
-                    </td>
-                `;
-                hiresList.appendChild(tr);
-            });
-        } else {
-            hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
+        if (snapshot.empty) {
+            hiresList.innerHTML = '<tr><td colspan="12">No hire records found for selected filter</td></tr>';
+            updateTotals(0, 0);
+            return;
         }
         
-        document.getElementById('totalFuelCost').textContent = totalFuel.toFixed(2);
-        document.getElementById('totalHireAmount').textContent = totalHire.toFixed(2);
-        document.getElementById('netProfit').textContent = (totalHire - totalFuel).toFixed(2);
+        const driversSnapshot = await db.collection('drivers').get();
+        const drivers = {};
+        driversSnapshot.forEach(doc => {
+            drivers[doc.id] = doc.data().name;
+        });
+        
+        snapshot.forEach(doc => {
+            const hire = doc.data();
+            totalHire += hire.hireAmount || 0;
+            
+            if (hire.fuelCost) {
+                totalFuel += hire.fuelCost;
+            }
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${hire.hireDate}</td>
+                <td>${hire.vehicleNumber}</td>
+                <td>${hire.fromLocation}</td>
+                <td>${hire.toLocation}</td>
+                <td>${hire.distance.toFixed(1)}</td>
+                <td>${hire.fuelLiters ? hire.fuelLiters.toFixed(1) : '-'}</td>
+                <td>${hire.fuelPricePerLiter ? hire.fuelPricePerLiter.toFixed(2) : '-'}</td>
+                <td>${hire.fuelCost ? hire.fuelCost.toFixed(2) : '-'}</td>
+                <td>${hire.perKmPrice.toFixed(2)}</td>
+                <td>${hire.hireAmount.toFixed(2)}</td>
+                <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
+                    <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
+                </td>
+            `;
+            hiresList.appendChild(tr);
+        });
+        
+        updateTotals(totalFuel, totalHire);
     } catch (error) {
         console.error("Error filtering hires:", error);
-        alert("Failed to filter hire records. Please check console for details.");
+        document.getElementById('hiresList').innerHTML = '<tr><td colspan="12">Error filtering hire records</td></tr>';
+        updateTotals(0, 0);
     }
 });
 
@@ -515,6 +572,10 @@ window.addEventListener('click', (e) => {
 
 // Initialize the app
 function initApp() {
+    // Remove required attribute from fuel fields
+    document.getElementById('fuelLiters').removeAttribute('required');
+    document.getElementById('fuelPricePerLiter').removeAttribute('required');
+    
     // Load all data
     loadVehicles();
     loadDrivers();
@@ -524,6 +585,9 @@ function initApp() {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('hireDate').value = today;
     document.getElementById('editHireDate').value = today;
+    
+    // Initialize totals display
+    updateTotals(0, 0);
 }
 
 // Start the app when DOM is loaded
