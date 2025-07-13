@@ -7,6 +7,8 @@
     <!-- Page Icon -->
     <link rel="icon" href="https://i.postimg.cc/g0rNcKpN/LOGO.png" type="image/png">
     <link rel="stylesheet" href="styles.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -35,17 +37,27 @@
     <!-- Main App Section (hidden by default) -->
     <div id="appSection" style="display: none;">
         <header>
-            <!-- Logo -->
-            <img src="https://i.postimg.cc/g0rNcKpN/LOGO.png" alt="Jayasooriya Enterprises Logo" class="logo">
-            <h1>JAYASOORIYA ENTERPRISES</h1>
-            <button id="logoutBtn" class="logout-btn">Logout</button>
+            <!-- Company Name and Admin/Logout -->
+            <div class="header-left">
+                <!-- Logo removed from here as requested -->
+                <span class="header-company-name">JAYASOORIYA ENTERPRISES - TRANSPORT MANAGEMENT SYSTEM</span>
+            </div>
+            <div class="header-right">
+                <span class="admin-info"><i class="fas fa-user-tie"></i> Administrator</span>
+                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
         </header>
 
         <div class="app-container">
             <nav class="sidebar">
-                <button id="vehiclesTab" class="active">Vehicles</button>
-                <button id="driversTab">Drivers</button>
-                <button id="hiresTab">Vehicle Hires</button>
+                <!-- Sidebar Header with Logo -->
+                <div class="sidebar-header">
+                    <img src="https://i.postimg.cc/g0rNcKpN/LOGO.png" alt="Jayasooriya Enterprises Logo" class="sidebar-logo">
+                    <!-- Company name removed from here as requested -->
+                </div>
+                <button id="vehiclesTab" class="active"><i class="fas fa-truck"></i> Vehicles</button>
+                <button id="driversTab"><i class="fas fa-user"></i> Drivers</button>
+                <button id="hiresTab"><i class="fas fa-clipboard-list"></i> Vehicle Hires</button>
             </nav>
 
             <main class="content-area">
@@ -53,14 +65,23 @@
                 <section id="vehiclesSection" class="active">
                     <div class="section-header">
                         <h2>Vehicle Management</h2>
-                        <button id="addVehicleBtn" class="add-btn">+ Add Vehicle</button>
+                        <button id="addVehicleBtn" class="add-btn"><i class="fas fa-plus-circle"></i> Add Vehicle</button>
                     </div>
+                    <p class="section-description">Manage your fleet vehicles and their details</p>
+                    <div class="search-filter-container">
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="vehicleSearch" placeholder="Search vehicles by number or ownership...">
+                        </div>
+                        <button id="searchVehiclesBtn" class="search-btn"><i class="fas fa-search"></i> Search</button>
+                    </div>
+                    <!-- Info bar for vehicles removed as requested -->
                     <div class="table-container">
                         <table id="vehiclesTable">
                             <thead>
                                 <tr>
                                     <th>Vehicle Number</th>
-                                    <th>Size</th>
+                                    <th>Size (ft)</th>
                                     <th>Price per KM</th>
                                     <th>Ownership</th>
                                     <th>Actions</th>
@@ -77,8 +98,17 @@
                 <section id="driversSection">
                     <div class="section-header">
                         <h2>Driver Management</h2>
-                        <button id="addDriverBtn" class="add-btn">+ Add Driver</button>
+                        <button id="addDriverBtn" class="add-btn"><i class="fas fa-plus-circle"></i> Add Driver</button>
                     </div>
+                    <p class="section-description">Manage your drivers and their personal information</p>
+                    <div class="search-filter-container">
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="driverSearch" placeholder="Search drivers by name or license number...">
+                        </div>
+                        <button id="searchDriversBtn" class="search-btn"><i class="fas fa-search"></i> Search</button>
+                    </div>
+                    <!-- Info bar for drivers removed as requested -->
                     <div class="table-container">
                         <table id="driversTable">
                             <thead>
@@ -101,8 +131,9 @@
                 <section id="hiresSection">
                     <div class="section-header">
                         <h2>Vehicle Hire Management</h2>
-                        <button id="addHireBtn" class="add-btn">+ Add Hire</button>
+                        <button id="addHireBtn" class="add-btn"><i class="fas fa-plus-circle"></i> Add Hire</button>
                     </div>
+                    <p class="section-description">Track and manage all vehicle hires</p>
                     <div class="table-container">
                         <div class="filter-container">
                             <label for="filterMonth">Filter by Month:</label>
@@ -125,7 +156,7 @@
                             <select id="filterVehicle">
                                 <option value="All">All Vehicles</option>
                             </select>
-                            <button id="applyFilter">Apply Filter</button>
+                            <button id="applyFilter"><i class="fas fa-filter"></i> Apply Filter</button>
                         </div>
                         <table id="hiresTable">
                             <thead>
@@ -180,7 +211,7 @@
                         <input type="text" id="vehicleNumber" required>
                     </div>
                     <div class="form-group">
-                        <label for="vehicleSize">Size:</label>
+                        <label for="vehicleSize">Size (ft):</label>
                         <input type="text" id="vehicleSize" required>
                     </div>
                     <div class="form-group">
@@ -194,7 +225,7 @@
                             <option value="Rented">Rented</option>
                         </select>
                     </div>
-                    <button type="submit">Add Vehicle</button>
+                    <button type="submit"><i class="fas fa-plus-circle"></i> Add Vehicle</button>
                 </form>
             </div>
         </div>
@@ -221,7 +252,7 @@
                         <label for="driverAddress">Address:</label>
                         <textarea id="driverAddress" required></textarea>
                     </div>
-                    <button type="submit">Add Driver</button>
+                    <button type="submit"><i class="fas fa-plus-circle"></i> Add Driver</button>
                 </form>
             </div>
         </div>
@@ -285,7 +316,7 @@
                             <option value="">Select Driver</option>
                         </select>
                     </div>
-                    <button type="submit">Add Hire</button>
+                    <button type="submit"><i class="fas fa-plus-circle"></i> Add Hire</button>
                 </form>
             </div>
         </div>
@@ -302,7 +333,7 @@
                         <input type="text" id="editVehicleNumber" required>
                     </div>
                     <div class="form-group">
-                        <label for="editVehicleSize">Size:</label>
+                        <label for="editVehicleSize">Size (ft):</label>
                         <input type="text" id="editVehicleSize" required>
                     </div>
                     <div class="form-group">
@@ -316,7 +347,7 @@
                             <option value="Rented">Rented</option>
                         </select>
                     </div>
-                    <button type="submit">Update Vehicle</button>
+                    <button type="submit"><i class="fas fa-sync-alt"></i> Update Vehicle</button>
                 </form>
             </div>
         </div>
@@ -343,7 +374,7 @@
                         <label for="editDriverAddress">Address:</label>
                         <textarea id="editDriverAddress" required></textarea>
                     </div>
-                    <button type="submit">Update Driver</button>
+                    <button type="submit"><i class="fas fa-sync-alt"></i> Update Driver</button>
                 </form>
             </div>
         </div>
@@ -407,7 +438,7 @@
                             <option value="">Select Driver</option>
                         </select>
                     </div>
-                    <button type="submit">Update Hire</button>
+                    <button type="submit"><i class="fas fa-sync-alt"></i> Update Hire</button>
                 </form>
             </div>
         </div>

@@ -8,7 +8,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 body {
-    background-color: #1a1a1a;
+    background-color: #0d0d0d; /* Darker background to match image */
     color: #e0e0e0;
     line-height: 1.6;
     font-family: 'Poppins', sans-serif;
@@ -128,24 +128,49 @@ body {
 
 /* Header with Logout Button */
 header {
-    position: relative;
-    background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
+    background-color: #1a1a1a; /* Solid dark background for header */
     color: white;
-    padding: 1.5rem 2rem;
-    text-align: center;
+    padding: 1rem 2rem; /* Adjusted padding */
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    justify-content: space-between; /* Space between left and right sections */
+    border-bottom: 1px solid #333; /* Subtle border */
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
-    position: relative;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Space between logo and text */
+}
+
+.header-logo {
+    /* Removed from HTML, so no styles needed here */
+    display: none; /* Ensure it's hidden if somehow still present */
+}
+
+.header-company-name {
+    font-size: 1.8rem; /* Made company name bigger */
+    font-weight: 600;
+    color: #e74c3c; /* Changed to red as requested */
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Space between admin info and logout button */
+}
+
+.admin-info {
+    color: #e0e0e0;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .logout-btn {
-    position: absolute;
-    right: 2rem;
     padding: 0.6rem 1.2rem;
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     color: white;
@@ -170,52 +195,52 @@ header {
     transform: translateY(0);
 }
 
-header .logo {
-    height: 120px;
-    margin-right: 25px;
-    border-radius: 50%;
-    box-shadow: 0 0 25px rgba(231, 76, 60, 0.4);
-    transition: transform 0.3s ease;
-}
-
-header .logo:hover {
-    transform: scale(1.05);
-}
-
-header h1 {
-    font-size: 2.8rem;
-    margin-bottom: 0;
-    color: #e74c3c;
-    font-weight: 600;
-    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    letter-spacing: 0.5px;
-}
-
 /* App Container for Sidebar Layout */
 .app-container {
     display: flex;
     flex: 1;
     width: 100%;
-    max-width: 1400px;
-    margin: 1.5rem auto;
-    background-color: #1f1f1f;
-    border-radius: 15px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    max-width: 1600px; /* Increased max-width */
+    margin: 0 auto; /* Removed top/bottom margin to fill screen */
+    background-color: #1a1a1a; /* Darker main app background */
+    border-radius: 0; /* No border-radius for full-width layout */
+    box-shadow: none; /* No box-shadow for full-width layout */
     overflow: hidden;
-    min-height: calc(100vh - 200px);
+    min-height: calc(100vh - 60px); /* Adjust height based on header/footer */
 }
 
 /* Sidebar Navigation */
 nav.sidebar {
     display: flex;
     flex-direction: column;
-    background: linear-gradient(135deg, #222 0%, #1a1a1a 100%);
-    padding: 2rem 1rem;
-    min-width: 240px;
+    background-color: #1a1a1a; /* Solid dark background for sidebar */
+    padding: 1.5rem 1rem;
+    min-width: 250px; /* Slightly wider sidebar */
     border-right: 1px solid #333;
     box-shadow: 3px 0 15px rgba(0, 0, 0, 0.2);
-    border-top-left-radius: 15px;
-    border-bottom-left-radius: 15px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #333;
+}
+
+.sidebar-logo {
+    height: 120px; /* Bigger logo in sidebar */
+    margin-bottom: 0; /* Removed margin as text is gone */
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(231, 76, 60, 0.3);
+}
+
+.sidebar-company-name {
+    /* Removed from HTML, so no styles needed here */
+    display: none;
 }
 
 nav.sidebar button {
@@ -266,7 +291,7 @@ nav.sidebar button:hover {
 }
 
 nav.sidebar button.active {
-    background-color: rgba(231, 76, 60, 0.2);
+    background-color: rgba(231, 76, 60, 0.2); /* Lighter red tint for active */
     font-weight: 600;
     color: white;
     transform: translateX(0);
@@ -281,12 +306,13 @@ main.content-area {
     flex: 1;
     padding: 2.5rem;
     overflow-y: auto;
+    background-color: #121212; /* Even darker background for content area */
 }
 
 section {
     display: none;
     margin-bottom: 2.5rem;
-    background: linear-gradient(135deg, #2a2a2a 0%, #222 100%);
+    background-color: #1a1a1a; /* Section background */
     padding: 2.5rem;
     border-radius: 15px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
@@ -306,7 +332,7 @@ section.active {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.5rem; /* Adjusted margin */
 }
 
 .section-header h2 {
@@ -315,12 +341,18 @@ section.active {
     padding-bottom: 0;
     font-size: 2rem;
     font-weight: 600;
-    color: #e74c3c;
-    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    color: #e0e0e0; /* White color for section titles */
+    text-shadow: none; /* No text shadow */
+}
+
+.section-description {
+    color: #aaa;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
 }
 
 .add-btn {
-    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); /* Green for add button */
     color: white;
     border: none;
     padding: 0.9rem 1.8rem;
@@ -360,6 +392,81 @@ h3 {
     font-weight: 600;
 }
 
+/* Search and Filter Container */
+.search-filter-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    align-items: center;
+}
+
+.search-box {
+    position: relative;
+    flex-grow: 1;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 1rem;
+}
+
+#vehicleSearch, #driverSearch {
+    width: 100%;
+    padding: 0.9rem 1.2rem 0.9rem 45px; /* Increased left padding for icon */
+    border: 1px solid #444;
+    border-radius: 8px;
+    background-color: #2a2a2a;
+    color: #f0f0f0;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+#vehicleSearch:focus, #driverSearch:focus {
+    border-color: #e74c3c;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+}
+
+.search-btn { /* Changed from .filter-btn to .search-btn */
+    background-color: #3a3a3a; /* Darker grey for search button */
+    color: #e0e0e0;
+    border: 1px solid #555;
+    padding: 0.9rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.search-btn:hover { /* Changed from .filter-btn to .search-btn */
+    background-color: #4a4a4a;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Info Bar */
+.info-bar {
+    display: none; /* Hidden as requested for vehicle and driver sections */
+}
+
+.vehicle-count, .driver-count {
+    font-weight: 600;
+    color: #e74c3c;
+}
+
+.total-value {
+    /* Removed from HTML, so no styles needed here */
+    display: none;
+}
+
+
 /* Form Styles */
 .form-container {
     background-color: #3a3a3a;
@@ -384,10 +491,10 @@ label {
 input, select, textarea {
     width: 100%;
     padding: 1.1rem 1.3rem;
-    border: 2px solid #555;
+    border: 1px solid #555; /* Thinner border */
     border-radius: 10px;
     font-size: 1rem;
-    background-color: #4a4a4a;
+    background-color: #2a2a2a; /* Darker input background */
     color: #f0f0f0;
     transition: all 0.3s ease;
 }
@@ -431,7 +538,7 @@ button[type="submit"]:active {
 
 /* Table Styles */
 .table-container {
-    background-color: #3a3a3a;
+    background-color: #1a1a1a; /* Darker background for table container */
     padding: 2.5rem;
     border-radius: 15px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
@@ -441,18 +548,18 @@ button[type="submit"]:active {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 2rem;
+    margin-top: 1rem; /* Adjusted margin */
 }
 
 th, td {
     padding: 1.2rem;
     text-align: left;
-    border-bottom: 1px solid #555;
+    border-bottom: 1px solid #3a3a3a; /* Darker border */
     color: #e0e0e0;
 }
 
 th {
-    background-color: #4a4a4a;
+    background-color: #2a2a2a; /* Darker header background */
     font-weight: 600;
     color: #f0f0f0;
     font-size: 0.95rem;
@@ -465,7 +572,7 @@ tr {
 }
 
 tr:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.03); /* More subtle hover */
 }
 
 td:last-child {
@@ -489,13 +596,13 @@ td:last-child {
 }
 
 .edit-btn {
-    background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
-    color: #333;
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); /* Orange for edit button */
+    color: white; /* Changed to white for better contrast */
 }
 
 .edit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3);
+    box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
 }
 
 .delete-btn {
@@ -508,6 +615,17 @@ td:last-child {
     box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
 }
 
+/* Ownership Status Colors */
+.ownership-company {
+    color: #2ecc71; /* Green for Company */
+    font-weight: 500;
+}
+
+.ownership-rented {
+    color: #f1c40f; /* Yellow for Rented */
+    font-weight: 500;
+}
+
 /* Filter Styles */
 .filter-container {
     display: flex;
@@ -515,7 +633,7 @@ td:last-child {
     gap: 1.8rem;
     margin-bottom: 2rem;
     align-items: center;
-    background-color: #3a3a3a;
+    background-color: #1a1a1a; /* Darker background for filter container */
     padding: 1.8rem;
     border-radius: 15px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
@@ -530,9 +648,9 @@ td:last-child {
 .filter-container select {
     width: auto;
     min-width: 200px;
-    background-color: #4a4a4a;
+    background-color: #2a2a2a; /* Darker select background */
     color: #f0f0f0;
-    border: 2px solid #555;
+    border: 1px solid #555; /* Thinner border */
     border-radius: 8px;
     padding: 0.8rem 1rem;
 }
@@ -564,14 +682,13 @@ td:last-child {
 
 /* Footer Styles */
 footer {
-    background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
+    background-color: #1a1a1a; /* Solid dark background for footer */
     color: white;
     text-align: center;
-    padding: 1.8rem 0;
+    padding: 1rem 0; /* Adjusted padding */
     margin-top: auto;
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-    box-shadow: 0 -6px 15px rgba(0, 0, 0, 0.3);
+    border-top: 1px solid #333; /* Subtle border */
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
     font-size: 0.95rem;
 }
@@ -597,10 +714,10 @@ footer {
 }
 
 .modal-content {
-    background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+    background-color: #1a1a1a; /* Darker modal background */
     margin: 5% auto;
     padding: 3rem;
-    border: 1px solid #555;
+    border: 1px solid #333; /* Darker border */
     width: 90%;
     max-width: 750px;
     border-radius: 20px;
@@ -644,49 +761,98 @@ footer {
 
 /* Responsive Styles */
 @media (max-width: 1024px) {
-    header h1 {
-        font-size: 2.2rem;
+    header {
+        padding: 0.8rem 1.5rem;
+    }
+    .header-logo {
+        height: 35px;
+    }
+    .header-company-name {
+        font-size: 1.5rem; /* Adjusted for smaller screens */
+    }
+    .admin-info {
+        font-size: 0.9rem;
+    }
+    .logout-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    nav.sidebar {
+        min-width: 200px;
+        padding: 1rem;
+    }
+    .sidebar-logo {
+        height: 90px; /* Adjusted for smaller screens */
+    }
+    .sidebar-company-name {
+        font-size: 1rem;
+    }
+    nav.sidebar button {
+        font-size: 1rem;
+        padding: 0.9rem 1rem;
     }
     
-    header .logo {
-        height: 90px;
+    main.content-area {
+        padding: 2rem;
     }
     
+    section {
+        padding: 2rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.8rem;
+    }
+
+    .search-filter-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-box {
+        width: 100%;
+    }
+    .search-btn { /* Changed from .filter-btn to .search-btn */
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .info-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+
+    .table-container {
+        padding: 2rem;
+    }
+
     .modal-content {
-        padding: 2.5rem;
+        padding: 2rem;
     }
 }
 
 @media (max-width: 768px) {
     header {
-        padding: 1.2rem 1.5rem;
         flex-direction: column;
-        text-align: center;
-        gap: 1rem;
+        gap: 10px;
+        padding: 0.8rem 1rem;
     }
-    
-    header h1 {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
+    .header-right {
+        gap: 10px;
     }
-    
-    header .logo {
-        height: 70px;
-        margin-right: 0;
-        margin-bottom: 0.5rem;
+    .admin-info {
+        font-size: 0.85rem;
     }
-    
     .logout-btn {
-        position: static;
-        margin-top: 1rem;
-        align-self: center;
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
     }
 
     .app-container {
         flex-direction: column;
-        margin: 0.5rem auto;
-        border-radius: 0;
-        box-shadow: none;
+        min-height: calc(100vh - 120px); /* Adjust for collapsed header */
     }
 
     nav.sidebar {
@@ -694,20 +860,22 @@ footer {
         width: 100%;
         flex-direction: row;
         flex-wrap: wrap;
-        padding: 1rem;
+        padding: 0.8rem;
         border-right: none;
         border-bottom: 1px solid #444;
-        border-radius: 0;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         gap: 0.5rem;
+        justify-content: center; /* Center buttons */
     }
-
+    .sidebar-header {
+        display: none; /* Hide sidebar header on mobile */
+    }
     nav.sidebar button {
-        flex: 1 1 calc(33.333% - 1rem);
-        min-width: 120px;
+        flex: 1 1 calc(33.333% - 1rem); /* 3 buttons per row */
+        min-width: 100px;
         text-align: center;
-        padding: 0.9rem 0.5rem;
-        font-size: 0.95rem;
+        padding: 0.8rem 0.5rem;
+        font-size: 0.9rem;
         margin: 0;
         justify-content: center;
     }
@@ -738,20 +906,20 @@ footer {
     }
 
     section {
-        padding: 1.8rem;
+        padding: 1.5rem;
     }
     
     .section-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 1.2rem;
+        gap: 1rem;
     }
     
     .filter-container {
         flex-direction: column;
         align-items: stretch;
-        gap: 1.2rem;
-        padding: 1.5rem;
+        gap: 1rem;
+        padding: 1.2rem;
     }
     
     .filter-container select, .filter-container button {
@@ -761,71 +929,77 @@ footer {
     .modal-content {
         width: 95%;
         margin: 10% auto;
-        padding: 2rem;
+        padding: 1.5rem;
     }
 
     .form-container, .table-container {
-        padding: 1.8rem;
+        padding: 1.5rem;
     }
 
     h2 {
         font-size: 1.6rem;
-        margin-bottom: 1.2rem;
-        padding-bottom: 0.7rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
     }
 
     h3 {
         font-size: 1.3rem;
-        margin: 1.2rem 0 0.8rem;
+        margin: 1rem 0 0.8rem;
     }
 
     input, select, textarea {
         font-size: 0.95rem;
-        padding: 1rem;
+        padding: 0.9rem;
     }
 
     button[type="submit"] {
         font-size: 1rem;
-        padding: 1rem 1.8rem;
+        padding: 0.9rem 1.5rem;
     }
     
     .action-btn {
-        font-size: 0.9rem;
-        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.9rem;
+        margin-right: 0.5rem;
     }
 
     #applyFilter {
-        font-size: 1rem;
-        padding: 0.9rem 1.5rem;
+        font-size: 0.95rem;
+        padding: 0.8rem 1.2rem;
+    }
+
+    table th, table td {
+        padding: 0.8rem;
+        font-size: 0.85rem;
     }
 }
 
 @media (max-width: 480px) {
     .login-box {
-        padding: 2rem;
+        padding: 1.5rem;
     }
     
+    .login-box h2 {
+        font-size: 1.8rem;
+    }
+
     header {
-        padding: 1rem;
+        padding: 0.6rem;
     }
-    
-    header h1 {
-        font-size: 1.5rem;
+    .header-logo {
+        height: 30px;
     }
-    
-    header .logo {
-        height: 60px;
+    .header-company-name {
+        font-size: 1rem;
     }
-    
-    .logout-btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
+    .admin-info, .logout-btn {
+        font-size: 0.8rem;
     }
 
     nav.sidebar button {
-        font-size: 0.85rem;
-        padding: 0.7rem 0.5rem;
-        flex: 1 1 calc(50% - 0.5rem);
+        flex: 1 1 calc(50% - 0.5rem); /* 2 buttons per row */
+        font-size: 0.8rem;
+        padding: 0.6rem 0.3rem;
     }
     
     main.content-area {
@@ -833,28 +1007,33 @@ footer {
     }
     
     section {
-        padding: 1.5rem;
+        padding: 1rem;
     }
     
     .modal-content {
-        padding: 1.5rem;
+        padding: 1.2rem;
     }
     
     h2 {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
     }
     
     h3 {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     
     input, select, textarea, button[type="submit"], .action-btn, #applyFilter {
-        font-size: 0.85rem;
-        padding: 0.8rem;
+        font-size: 0.8rem;
+        padding: 0.7rem;
     }
     
     .form-container, .table-container {
-        padding: 1.5rem;
+        padding: 1rem;
+    }
+
+    table th, table td {
+        padding: 0.6rem;
+        font-size: 0.75rem;
     }
 }
 
