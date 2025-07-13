@@ -1,4 +1,4 @@
-// Login Functionality
+// Login Functionality with Auto-Logout
 document.addEventListener('DOMContentLoaded', function() {
     const loginSection = document.getElementById('loginSection');
     const appSection = document.getElementById('appSection');
@@ -6,11 +6,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginError = document.getElementById('loginError');
     const logoutBtn = document.getElementById('logoutBtn');
 
+    // Auto-logout variables
+    let inactivityTimer;
+    const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+    // Function to reset the inactivity timer
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(logoutDueToInactivity, INACTIVITY_TIMEOUT);
+    }
+
+    // Function to handle logout due to inactivity
+    function logoutDueToInactivity() {
+        localStorage.removeItem('isLoggedIn');
+        loginSection.style.display = 'flex';
+        appSection.style.display = 'none';
+        showMessage('You have been automatically logged out due to inactivity', 'error');
+        
+        // Clear form fields
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        loginError.style.display = 'none';
+    }
+
+    // Set up event listeners for user activity
+    function setupActivityListeners() {
+        ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(event => {
+            document.addEventListener(event, resetInactivityTimer);
+        });
+    }
+
     // Check if user is already logged in
     if(localStorage.getItem('isLoggedIn')) {
         loginSection.style.display = 'none';
         appSection.style.display = 'block';
-        initApp(); // Initialize the app if already logged in
+        initApp();
+        setupActivityListeners();
+        resetInactivityTimer(); // Start the inactivity timer
     } else {
         loginSection.style.display = 'flex';
         appSection.style.display = 'none';
@@ -27,7 +59,10 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('isLoggedIn', 'true');
             loginSection.style.display = 'none';
             appSection.style.display = 'block';
-            initApp(); // Initialize the app after successful login
+            initApp();
+            setupActivityListeners();
+            resetInactivityTimer(); // Start the inactivity timer after login
+            loginError.style.display = 'none';
         } else {
             loginError.textContent = 'Invalid username or password';
             loginError.style.display = 'block';
@@ -43,6 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
         loginError.style.display = 'none';
+        clearTimeout(inactivityTimer); // Clear the inactivity timer
+        showMessage('You have been logged out successfully', 'success');
     });
 });
 
