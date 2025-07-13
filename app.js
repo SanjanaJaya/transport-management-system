@@ -686,108 +686,226 @@ function exportHiresToPDF() {
             vehicleName = selectedOption.text;
         }
         
-        // Add logo (we'll use a placeholder text since we can't directly use the image from URL)
-        doc.setFontSize(20);
-        doc.setTextColor(231, 76, 60); // Red color
-        doc.text('JAYASOORIYA ENTERPRISES', 105, 20, { align: 'center' });
-        doc.setFontSize(14);
-        doc.setTextColor(0, 0, 0); // Black color
-        doc.text('Vehicle Hire Report', 105, 30, { align: 'center' });
+        // Add logo
+        const logoUrl = 'https://i.postimg.cc/ncLHmYyk/PDF-logo.png';
         
-        // Add filter info
-        doc.setFontSize(12);
-        doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 40);
-        doc.text(`Vehicle: ${vehicleName}`, 15, 47);
-        
-        // Add current date
-        const today = new Date();
-        doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 54);
-        
-        // Get table data
-        const hiresTable = document.getElementById('hiresTable');
-        const rows = hiresTable.querySelectorAll('tbody tr');
-        
-        if (rows.length === 0) {
+        // Add logo to PDF (this will be loaded asynchronously)
+        const img = new Image();
+        img.src = logoUrl;
+        img.onload = function() {
+            doc.addImage(img, 'PNG', 15, 10, 30, 30);
+            
+            // Add header text
+            doc.setFontSize(20);
+            doc.setTextColor(231, 76, 60); // Red color
+            doc.text('JAYASOORIYA ENTERPRISES', 105, 20, { align: 'center' });
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0); // Black color
+            doc.text('Vehicle Hire Report', 105, 30, { align: 'center' });
+            
+            // Add filter info
             doc.setFontSize(12);
-            doc.text('No hire records found for selected filter', 15, 70);
-        } else {
-            // Prepare data for the table
-            const tableData = [];
-            tableData.push([
-                'Date', 
-                'Vehicle', 
-                'From', 
-                'To', 
-                'Distance', 
-                'Fuel (L)', 
-                'Fuel Price/L', 
-                'Fuel Cost', 
-                'Price/KM', 
-                'Hire Amount', 
-                'Driver'
-            ]);
+            doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 40);
+            doc.text(`Vehicle: ${vehicleName}`, 15, 47);
             
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                const rowData = [];
-                for (let i = 0; i < cells.length - 1; i++) { // Skip last cell (actions)
-                    rowData.push(cells[i].textContent.trim());
-                }
-                tableData.push(rowData);
-            });
+            // Add current date
+            const today = new Date();
+            doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 54);
             
-            // Add the table
-            doc.autoTable({
-                startY: 70,
-                head: [tableData[0]],
-                body: tableData.slice(1),
-                theme: 'grid',
-                headStyles: {
-                    fillColor: [231, 76, 60], // Red header
-                    textColor: [255, 255, 255] // White text
-                },
-                alternateRowStyles: {
-                    fillColor: [245, 245, 245] // Light gray for alternate rows
-                },
-                styles: {
-                    fontSize: 8,
-                    cellPadding: 3
-                },
-                columnStyles: {
-                    0: { cellWidth: 15 },
-                    1: { cellWidth: 20 },
-                    2: { cellWidth: 20 },
-                    3: { cellWidth: 20 },
-                    4: { cellWidth: 15 },
-                    5: { cellWidth: 12 },
-                    6: { cellWidth: 15 },
-                    7: { cellWidth: 15 },
-                    8: { cellWidth: 15 },
-                    9: { cellWidth: 20 },
-                    10: { cellWidth: 25 }
-                }
-            });
+            // Get table data
+            const hiresTable = document.getElementById('hiresTable');
+            const rows = hiresTable.querySelectorAll('tbody tr');
             
-            // Add totals
-            const totalFuel = document.getElementById('totalFuelCost').textContent;
-            const totalHire = document.getElementById('totalHireAmount').textContent;
-            const netProfit = document.getElementById('netProfit').textContent;
+            if (rows.length === 0) {
+                doc.setFontSize(12);
+                doc.text('No hire records found for selected filter', 15, 70);
+            } else {
+                // Prepare data for the table
+                const tableData = [];
+                tableData.push([
+                    'Date', 
+                    'Vehicle', 
+                    'From', 
+                    'To', 
+                    'Distance', 
+                    'Fuel (L)', 
+                    'Fuel Price/L', 
+                    'Fuel Cost', 
+                    'Price/KM', 
+                    'Hire Amount', 
+                    'Driver'
+                ]);
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    const rowData = [];
+                    for (let i = 0; i < cells.length - 1; i++) { // Skip last cell (actions)
+                        rowData.push(cells[i].textContent.trim());
+                    }
+                    tableData.push(rowData);
+                });
+                
+                // Add the table
+                doc.autoTable({
+                    startY: 70,
+                    head: [tableData[0]],
+                    body: tableData.slice(1),
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [231, 76, 60], // Red header
+                        textColor: [255, 255, 255] // White text
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245] // Light gray for alternate rows
+                    },
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 3
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 15 },
+                        1: { cellWidth: 20 },
+                        2: { cellWidth: 20 },
+                        3: { cellWidth: 20 },
+                        4: { cellWidth: 15 },
+                        5: { cellWidth: 12 },
+                        6: { cellWidth: 15 },
+                        7: { cellWidth: 15 },
+                        8: { cellWidth: 15 },
+                        9: { cellWidth: 20 },
+                        10: { cellWidth: 25 }
+                    }
+                });
+                
+                // Add totals
+                const totalFuel = document.getElementById('totalFuelCost').textContent;
+                const totalHire = document.getElementById('totalHireAmount').textContent;
+                const netProfit = document.getElementById('netProfit').textContent;
+                
+                const finalY = doc.lastAutoTable.finalY + 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY);
+                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 7);
+                doc.setFontSize(12);
+                doc.setTextColor(231, 76, 60);
+                doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 17);
+            }
             
-            const finalY = doc.lastAutoTable.finalY + 10;
+            // Save the PDF
+            doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
             
-            doc.setFontSize(10);
-            doc.setTextColor(0, 0, 0);
-            doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY);
-            doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 7);
+            showMessage('PDF exported successfully!', 'success');
+        };
+        
+        img.onerror = function() {
+            // If logo fails to load, proceed without it
+            console.warn("Logo failed to load, generating PDF without it");
+            
+            // Add header text
+            doc.setFontSize(20);
+            doc.setTextColor(231, 76, 60); // Red color
+            doc.text('JAYASOORIYA ENTERPRISES', 105, 20, { align: 'center' });
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0); // Black color
+            doc.text('Vehicle Hire Report', 105, 30, { align: 'center' });
+            
+            // Add filter info
             doc.setFontSize(12);
-            doc.setTextColor(231, 76, 60);
-            doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 17);
-        }
-        
-        // Save the PDF
-        doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
-        
-        showMessage('PDF exported successfully!', 'success');
+            doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 40);
+            doc.text(`Vehicle: ${vehicleName}`, 15, 47);
+            
+            // Add current date
+            const today = new Date();
+            doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 54);
+            
+            // Get table data
+            const hiresTable = document.getElementById('hiresTable');
+            const rows = hiresTable.querySelectorAll('tbody tr');
+            
+            if (rows.length === 0) {
+                doc.setFontSize(12);
+                doc.text('No hire records found for selected filter', 15, 70);
+            } else {
+                // Prepare data for the table
+                const tableData = [];
+                tableData.push([
+                    'Date', 
+                    'Vehicle', 
+                    'From', 
+                    'To', 
+                    'Distance', 
+                    'Fuel (L)', 
+                    'Fuel Price/L', 
+                    'Fuel Cost', 
+                    'Price/KM', 
+                    'Hire Amount', 
+                    'Driver'
+                ]);
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    const rowData = [];
+                    for (let i = 0; i < cells.length - 1; i++) { // Skip last cell (actions)
+                        rowData.push(cells[i].textContent.trim());
+                    }
+                    tableData.push(rowData);
+                });
+                
+                // Add the table
+                doc.autoTable({
+                    startY: 70,
+                    head: [tableData[0]],
+                    body: tableData.slice(1),
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [231, 76, 60], // Red header
+                        textColor: [255, 255, 255] // White text
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245] // Light gray for alternate rows
+                    },
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 3
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 15 },
+                        1: { cellWidth: 20 },
+                        2: { cellWidth: 20 },
+                        3: { cellWidth: 20 },
+                        4: { cellWidth: 15 },
+                        5: { cellWidth: 12 },
+                        6: { cellWidth: 15 },
+                        7: { cellWidth: 15 },
+                        8: { cellWidth: 15 },
+                        9: { cellWidth: 20 },
+                        10: { cellWidth: 25 }
+                    }
+                });
+                
+                // Add totals
+                const totalFuel = document.getElementById('totalFuelCost').textContent;
+                const totalHire = document.getElementById('totalHireAmount').textContent;
+                const netProfit = document.getElementById('netProfit').textContent;
+                
+                const finalY = doc.lastAutoTable.finalY + 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY);
+                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 7);
+                doc.setFontSize(12);
+                doc.setTextColor(231, 76, 60);
+                doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 17);
+            }
+            
+            // Save the PDF
+            doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
+            
+            showMessage('PDF exported successfully!', 'success');
+        };
     } catch (error) {
         console.error("Error generating PDF:", error);
         showMessage("Failed to generate PDF. Please check console for details.", 'error');
