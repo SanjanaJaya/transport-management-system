@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loginSection.style.display = 'flex';
         appSection.style.display = 'none';
         showMessage('You have been automatically logged out due to inactivity', 'error');
-        
+
         // Clear form fields
         document.getElementById('username').value = '';
         document.getElementById('password').value = '';
@@ -188,7 +188,7 @@ hireForm.addEventListener('submit', async (e) => {
     try {
         const vehicleId = document.getElementById('hireVehicle').value;
         const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
-        
+
         if (!vehicleDoc.exists) {
             throw new Error("Selected vehicle not found");
         }
@@ -207,10 +207,10 @@ hireForm.addEventListener('submit', async (e) => {
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             hireAmount: parseFloat(document.getElementById('distance').value) * vehicle.perKmPrice
         };
-        
+
         const fuelLiters = document.getElementById('fuelLiters').value;
         const fuelPricePerLiter = document.getElementById('fuelPricePerLiter').value;
-        
+
         if (fuelLiters) {
             hire.fuelLiters = parseFloat(fuelLiters);
         }
@@ -220,7 +220,7 @@ hireForm.addEventListener('submit', async (e) => {
         if (fuelLiters && fuelPricePerLiter) {
             hire.fuelCost = hire.fuelLiters * hire.fuelPricePerLiter;
         }
-        
+
         await db.collection('hires').add(hire);
         hireForm.reset();
         document.getElementById('addHireModal').style.display = 'none';
@@ -236,12 +236,12 @@ function loadVehicles() {
     db.collection('vehicles').orderBy('createdAt').onSnapshot((snapshot) => {
         const vehiclesList = document.getElementById('vehiclesList');
         vehiclesList.innerHTML = '';
-        
+
         if (snapshot.empty) {
             vehiclesList.innerHTML = '<tr><td colspan="5">No vehicles found</td></tr>';
             return;
         }
-        
+
         snapshot.forEach(doc => {
             const vehicle = doc.data();
             const tr = document.createElement('tr');
@@ -257,7 +257,7 @@ function loadVehicles() {
             `;
             vehiclesList.appendChild(tr);
         });
-        
+
         populateVehicleDropdowns(snapshot);
     }, error => {
         console.error("Error loading vehicles:", error);
@@ -270,12 +270,12 @@ function loadDrivers() {
     db.collection('drivers').orderBy('createdAt').onSnapshot((snapshot) => {
         const driversList = document.getElementById('driversList');
         driversList.innerHTML = '';
-        
+
         if (snapshot.empty) {
             driversList.innerHTML = '<tr><td colspan="5">No drivers found</td></tr>';
             return;
         }
-        
+
         snapshot.forEach(doc => {
             const driver = doc.data();
             const tr = document.createElement('tr');
@@ -291,7 +291,7 @@ function loadDrivers() {
             `;
             driversList.appendChild(tr);
         });
-        
+
         populateDriverDropdowns(snapshot);
     }, error => {
         console.error("Error loading drivers:", error);
@@ -306,28 +306,28 @@ function loadHires() {
         hiresList.innerHTML = '';
         let totalFuel = 0;
         let totalHire = 0;
-        
+
         if (snapshot.empty) {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
             updateTotals(0, 0);
             return;
         }
-        
+
         // Get all drivers for display
         const driversSnapshot = await db.collection('drivers').get();
         const drivers = {};
         driversSnapshot.forEach(doc => {
             drivers[doc.id] = doc.data().name;
         });
-        
+
         snapshot.forEach(doc => {
             const hire = doc.data();
             totalHire += hire.hireAmount || 0;
-            
+
             if (hire.fuelCost) {
                 totalFuel += hire.fuelCost;
             }
-            
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${hire.hireDate}</td>
@@ -348,7 +348,7 @@ function loadHires() {
             `;
             hiresList.appendChild(tr);
         });
-        
+
         updateTotals(totalFuel, totalHire);
     }, error => {
         console.error("Error loading hires:", error);
@@ -370,10 +370,10 @@ function populateVehicleDropdowns(vehiclesSnapshot) {
         document.getElementById('editHireVehicle'),
         document.getElementById('filterVehicle')
     ];
-    
+
     dropdowns.forEach(dropdown => {
         while (dropdown.options.length > 1) dropdown.remove(1);
-        
+
         if (!vehiclesSnapshot.empty) {
             vehiclesSnapshot.forEach(doc => {
                 const vehicle = doc.data();
@@ -392,10 +392,10 @@ function populateDriverDropdowns(driversSnapshot) {
         document.getElementById('hireDriver'),
         document.getElementById('editHireDriver')
     ];
-    
+
     dropdowns.forEach(dropdown => {
         while (dropdown.options.length > 1) dropdown.remove(1);
-        
+
         if (!driversSnapshot.empty) {
             driversSnapshot.forEach(doc => {
                 const driver = doc.data();
@@ -413,14 +413,14 @@ document.addEventListener('click', async (e) => {
     if (e.target.classList.contains('delete-btn')) {
         const id = e.target.getAttribute('data-id');
         const table = e.target.closest('table').id;
-        
+
         showConfirmation('Are you sure you want to delete this record?', async () => {
             try {
                 let collectionName;
                 if (table === 'vehiclesTable') collectionName = 'vehicles';
                 else if (table === 'driversTable') collectionName = 'drivers';
                 else if (table === 'hiresTable') collectionName = 'hires';
-                
+
                 if (collectionName) {
                     await db.collection(collectionName).doc(id).delete();
                     showMessage('Record deleted successfully!', 'success');
@@ -431,11 +431,11 @@ document.addEventListener('click', async (e) => {
             }
         });
     }
-    
+
     if (e.target.classList.contains('edit-btn')) {
         const id = e.target.getAttribute('data-id');
         const table = e.target.closest('table').id;
-        
+
         try {
             if (table === 'vehiclesTable') {
                 const doc = await db.collection('vehicles').doc(id).get();
@@ -473,14 +473,14 @@ document.addEventListener('click', async (e) => {
                     document.getElementById('editHireDate').value = hire.hireDate;
                     document.getElementById('editFuelLiters').value = hire.fuelLiters || '';
                     document.getElementById('editFuelPricePerLiter').value = hire.fuelPricePerLiter || '';
-                    
+
                     setTimeout(() => {
                         document.getElementById('editHireVehicle').value = hire.vehicleId;
                         if (hire.driverId) {
                             document.getElementById('editHireDriver').value = hire.driverId;
                         }
                     }, 100);
-                    
+
                     document.getElementById('editHireModal').style.display = 'block';
                 }
             }
@@ -537,7 +537,7 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
     try {
         const id = document.getElementById('editHireId').value;
         const vehicleId = document.getElementById('editHireVehicle').value;
-        
+
         const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
         if (!vehicleDoc.exists) {
             throw new Error("Selected vehicle not found");
@@ -557,29 +557,29 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
             hireAmount: parseFloat(document.getElementById('editDistance').value) * vehicle.perKmPrice
         };
-        
+
         // Handle optional fuel fields
         const fuelLiters = document.getElementById('editFuelLiters').value;
         const fuelPricePerLiter = document.getElementById('editFuelPricePerLiter').value;
-        
+
         if (fuelLiters) {
             updates.fuelLiters = parseFloat(fuelLiters);
         } else {
             updates.fuelLiters = firebase.firestore.FieldValue.delete();
         }
-        
+
         if (fuelPricePerLiter) {
             updates.fuelPricePerLiter = parseFloat(fuelPricePerLiter);
         } else {
             updates.fuelPricePerLiter = firebase.firestore.FieldValue.delete();
         }
-        
+
         if (fuelLiters && fuelPricePerLiter) {
             updates.fuelCost = updates.fuelLiters * updates.fuelPricePerLiter;
         } else {
             updates.fuelCost = firebase.firestore.FieldValue.delete();
         }
-        
+
         await db.collection('hires').doc(id).update(updates);
         document.getElementById('editHireModal').style.display = 'none';
         showMessage('Hire record updated successfully!', 'success');
@@ -594,50 +594,50 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
     try {
         const month = document.getElementById('filterMonth').value;
         const vehicle = document.getElementById('filterVehicle').value;
-        
+
         let query = db.collection('hires');
-        
+
         // Apply month filter if not 'All'
         if (month !== 'All') {
             query = query.where('month', '==', month);
         }
-        
+
         // Apply vehicle filter if not 'All'
         if (vehicle !== 'All') {
             query = query.where('vehicleId', '==', vehicle);
         }
-        
+
         // Add ordering
         query = query.orderBy('createdAt');
-        
+
         const snapshot = await query.get();
         const hiresList = document.getElementById('hiresList');
         hiresList.innerHTML = '';
         let totalFuel = 0;
         let totalHire = 0;
-        
+
         if (snapshot.empty) {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found for selected filter</td></tr>';
             updateTotals(0, 0);
             return;
         }
-        
+
         // Get all drivers for display
         const driversSnapshot = await db.collection('drivers').get();
         const drivers = {};
         driversSnapshot.forEach(doc => {
             drivers[doc.id] = doc.data().name;
         });
-        
+
         // Process each hire record
         snapshot.forEach(doc => {
             const hire = doc.data();
             totalHire += hire.hireAmount || 0;
-            
+
             if (hire.fuelCost) {
                 totalFuel += hire.fuelCost;
             }
-            
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${hire.hireDate}</td>
@@ -658,7 +658,7 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
             `;
             hiresList.appendChild(tr);
         });
-        
+
         updateTotals(totalFuel, totalHire);
     } catch (error) {
         console.error("Error filtering hires:", error);
@@ -673,11 +673,11 @@ function exportHiresToPDF() {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
+
         // Get filter values
         const month = document.getElementById('filterMonth').value;
         const vehicleId = document.getElementById('filterVehicle').value;
-        
+
         // Get vehicle name if filtered
         let vehicleName = "All Vehicles";
         if (vehicleId !== "All") {
@@ -685,57 +685,62 @@ function exportHiresToPDF() {
             const selectedOption = vehicleSelect.options[vehicleSelect.selectedIndex];
             vehicleName = selectedOption.text;
         }
-        
+
         // Add logo
         const logoUrl = 'https://i.postimg.cc/ncLHmYyk/PDF-logo.png';
-        
+
         // Add logo to PDF (this will be loaded asynchronously)
         const img = new Image();
         img.src = logoUrl;
         img.onload = function() {
-            doc.addImage(img, 'PNG', 15, 10, 30, 30);
-            
+            // Calculate center position for the logo
+            const imgWidth = 30; // Original width of the logo
+            const imgHeight = 30; // Original height of the logo
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const x = (pageWidth - imgWidth) / 2;
+            doc.addImage(img, 'PNG', x, 10, imgWidth, imgHeight);
+
             // Add header text
             doc.setFontSize(20);
             doc.setTextColor(231, 76, 60); // Red color
-            doc.text('JAYASOORIYA ENTERPRISES', 105, 20, { align: 'center' });
+            doc.text('JAYASOORIYA ENTERPRISES', pageWidth / 2, 50, { align: 'center' }); // Adjusted Y position
             doc.setFontSize(14);
             doc.setTextColor(0, 0, 0); // Black color
-            doc.text('Vehicle Hire Report', 105, 30, { align: 'center' });
-            
+            doc.text('Vehicle Hire Report', pageWidth / 2, 60, { align: 'center' }); // Adjusted Y position
+
             // Add filter info
             doc.setFontSize(12);
-            doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 40);
-            doc.text(`Vehicle: ${vehicleName}`, 15, 47);
-            
+            doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 70);
+            doc.text(`Vehicle: ${vehicleName}`, 15, 77);
+
             // Add current date
             const today = new Date();
-            doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 54);
-            
+            doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 84);
+
             // Get table data
             const hiresTable = document.getElementById('hiresTable');
             const rows = hiresTable.querySelectorAll('tbody tr');
-            
+
             if (rows.length === 0) {
                 doc.setFontSize(12);
-                doc.text('No hire records found for selected filter', 15, 70);
+                doc.text('No hire records found for selected filter', 15, 100);
             } else {
                 // Prepare data for the table
                 const tableData = [];
                 tableData.push([
-                    'Date', 
-                    'Vehicle', 
-                    'From', 
-                    'To', 
-                    'Distance', 
-                    'Fuel (L)', 
-                    'Fuel Price/L', 
-                    'Fuel Cost', 
-                    'Price/KM', 
-                    'Hire Amount', 
+                    'Date',
+                    'Vehicle',
+                    'From',
+                    'To',
+                    'Distance',
+                    'Fuel (L)',
+                    'Fuel Price/L',
+                    'Fuel Cost',
+                    'Price/KM',
+                    'Hire Amount',
                     'Driver'
                 ]);
-                
+
                 rows.forEach(row => {
                     const cells = row.querySelectorAll('td');
                     const rowData = [];
@@ -744,10 +749,10 @@ function exportHiresToPDF() {
                     }
                     tableData.push(rowData);
                 });
-                
+
                 // Add the table
                 doc.autoTable({
-                    startY: 70,
+                    startY: 95, // Adjusted startY to accommodate new header
                     head: [tableData[0]],
                     body: tableData.slice(1),
                     theme: 'grid',
@@ -776,14 +781,14 @@ function exportHiresToPDF() {
                         10: { cellWidth: 25 }
                     }
                 });
-                
+
                 // Add totals
                 const totalFuel = document.getElementById('totalFuelCost').textContent;
                 const totalHire = document.getElementById('totalHireAmount').textContent;
                 const netProfit = document.getElementById('netProfit').textContent;
-                
-                const finalY = doc.lastAutoTable.finalY + 10;
-                
+
+                let finalY = doc.lastAutoTable.finalY + 10;
+
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY);
@@ -791,39 +796,46 @@ function exportHiresToPDF() {
                 doc.setFontSize(12);
                 doc.setTextColor(231, 76, 60);
                 doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 17);
+
+                // Add system generated text at the bottom
+                finalY = finalY + 30; // Further adjust Y to place it below totals
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100); // Grey color for this text
+                doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
             }
-            
+
             // Save the PDF
             doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
-            
+
             showMessage('PDF exported successfully!', 'success');
         };
-        
+
         img.onerror = function() {
             // If logo fails to load, proceed without it
             console.warn("Logo failed to load, generating PDF without it");
-            
+
             // Add header text
+            const pageWidth = doc.internal.pageSize.getWidth();
             doc.setFontSize(20);
             doc.setTextColor(231, 76, 60); // Red color
-            doc.text('JAYASOORIYA ENTERPRISES', 105, 20, { align: 'center' });
+            doc.text('JAYASOORIYA ENTERPRISES', pageWidth / 2, 20, { align: 'center' });
             doc.setFontSize(14);
             doc.setTextColor(0, 0, 0); // Black color
-            doc.text('Vehicle Hire Report', 105, 30, { align: 'center' });
-            
+            doc.text('Vehicle Hire Report', pageWidth / 2, 30, { align: 'center' });
+
             // Add filter info
             doc.setFontSize(12);
             doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 40);
             doc.text(`Vehicle: ${vehicleName}`, 15, 47);
-            
+
             // Add current date
             const today = new Date();
             doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 54);
-            
+
             // Get table data
             const hiresTable = document.getElementById('hiresTable');
             const rows = hiresTable.querySelectorAll('tbody tr');
-            
+
             if (rows.length === 0) {
                 doc.setFontSize(12);
                 doc.text('No hire records found for selected filter', 15, 70);
@@ -831,19 +843,19 @@ function exportHiresToPDF() {
                 // Prepare data for the table
                 const tableData = [];
                 tableData.push([
-                    'Date', 
-                    'Vehicle', 
-                    'From', 
-                    'To', 
-                    'Distance', 
-                    'Fuel (L)', 
-                    'Fuel Price/L', 
-                    'Fuel Cost', 
-                    'Price/KM', 
-                    'Hire Amount', 
+                    'Date',
+                    'Vehicle',
+                    'From',
+                    'To',
+                    'Distance',
+                    'Fuel (L)',
+                    'Fuel Price/L',
+                    'Fuel Cost',
+                    'Price/KM',
+                    'Hire Amount',
                     'Driver'
                 ]);
-                
+
                 rows.forEach(row => {
                     const cells = row.querySelectorAll('td');
                     const rowData = [];
@@ -852,7 +864,7 @@ function exportHiresToPDF() {
                     }
                     tableData.push(rowData);
                 });
-                
+
                 // Add the table
                 doc.autoTable({
                     startY: 70,
@@ -884,14 +896,14 @@ function exportHiresToPDF() {
                         10: { cellWidth: 25 }
                     }
                 });
-                
+
                 // Add totals
                 const totalFuel = document.getElementById('totalFuelCost').textContent;
                 const totalHire = document.getElementById('totalHireAmount').textContent;
                 const netProfit = document.getElementById('netProfit').textContent;
-                
-                const finalY = doc.lastAutoTable.finalY + 10;
-                
+
+                let finalY = doc.lastAutoTable.finalY + 10;
+
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY);
@@ -899,11 +911,17 @@ function exportHiresToPDF() {
                 doc.setFontSize(12);
                 doc.setTextColor(231, 76, 60);
                 doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 17);
+
+                // Add system generated text at the bottom
+                finalY = finalY + 30; // Further adjust Y to place it below totals
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100); // Grey color for this text
+                doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
             }
-            
+
             // Save the PDF
             doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
-            
+
             showMessage('PDF exported successfully!', 'success');
         };
     } catch (error) {
@@ -1006,10 +1024,10 @@ function initApp() {
     loadVehicles();
     loadDrivers();
     loadHires();
-    
+
     // Initialize totals display
     updateTotals(0, 0);
-    
+
     // Add PDF export button event listener
     document.getElementById('exportPdfBtn').addEventListener('click', exportHiresToPDF);
 }
