@@ -7,12 +7,12 @@
 }
 
 body {
-    background-color: #1a1a1a; /* Darker background */
-    color: #e0e0e0; /* Lighter text color */
+    background-color: #1a1a1a;
+    color: #e0e0e0;
     line-height: 1.6;
-    display: flex; /* Flexbox for full page layout */
-    flex-direction: column; /* Stack header, app-container, footer vertically */
-    min-height: 100vh; /* Ensure body takes full viewport height */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 /* Login Styles */
@@ -126,182 +126,198 @@ header {
     background-color: #c0392b;
 }
 
-header {
-    background-color: #0d0d0d; /* Changed to very dark grey/black */
-    color: white;
-    padding: 1rem 0;
-    text-align: center;
-    display: flex; /* Added flex for logo alignment */
-    align-items: center;
-    justify-content: center;
-    border-bottom-left-radius: 10px; /* Rounded corners */
-    border-bottom-right-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-    flex-shrink: 0; /* Prevent header from shrinking */
-}
-
 header .logo {
-    height: 150px; /* Made logo even bigger */
-    margin-right: 25px; /* Increased margin */
-    border-radius: 50%; /* Make logo round */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* More prominent shadow for logo */
+    height: 150px;
+    margin-right: 25px;
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 header h1 {
-    font-size: 3.5rem; /* Larger font size for main title */
-    margin-bottom: 0; /* Removed bottom margin as H2 is gone */
-    color: #e74c3c; /* Changed "Jayasooriya Enterprises" color to red */
+    font-size: 3.5rem;
+    margin-bottom: 0;
+    color: #e74c3c;
 }
 
 /* App Container for Sidebar Layout */
 .app-container {
     display: flex;
-    flex: 1; /* Allow app container to grow and take available space */
-    width: 100%; /* Take full width of its parent (body) */
-    max-width: 1400px; /* Set to a more normal desktop width */
-    margin: 1rem auto; /* Center the container with some margin */
-    background-color: #1f1f1f; /* Darker background for the main app area */
+    flex: 1;
+    width: 100%;
+    max-width: 1400px;
+    margin: 1rem auto;
+    background-color: #1f1f1f;
     border-radius: 10px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
-    overflow: hidden; /* Hide overflow from rounded corners */
+    overflow: hidden;
 }
 
 /* Sidebar Navigation */
 nav.sidebar {
     display: flex;
-    flex-direction: column; /* Stack buttons vertically */
-    background-color: #222; /* Changed to dark grey */
-    padding: 1.5rem 0.5rem; /* Padding for sidebar */
-    min-width: 220px; /* Slightly increased fixed width for sidebar */
-    border-right: 1px solid #333; /* Separator line */
+    flex-direction: column;
+    background-color: #222;
+    padding: 1.5rem 0.5rem;
+    min-width: 220px;
+    border-right: 1px solid #333;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-    border-top-left-radius: 10px; /* Match app-container radius */
+    border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
 }
 
 nav.sidebar button {
-    width: 100%; /* Buttons take full width of sidebar */
-    padding: 1.3rem 1.2rem; /* Increased padding for vertical buttons */
+    width: 100%;
+    padding: 1.3rem 1.2rem;
     background-color: transparent;
     border: none;
-    color: #e0e0e0; /* Lighter text color */
+    color: #e0e0e0;
     cursor: pointer;
-    font-size: 1.3rem; /* Larger font size */
-    text-align: left; /* Align text to the left */
+    font-size: 1.3rem;
+    text-align: left;
     transition: background-color 0.3s, color 0.3s, transform 0.2s;
-    border-radius: 8px; /* Rounded button corners */
-    margin-bottom: 12px; /* Increased space between buttons */
+    border-radius: 8px;
+    margin-bottom: 12px;
 }
 
 nav.sidebar button:last-child {
-    margin-bottom: 0; /* No margin for the last button */
+    margin-bottom: 0;
 }
 
 nav.sidebar button:hover {
-    background-color: #333; /* Darker hover background */
+    background-color: #333;
     color: #f0f0f0;
-    transform: translateX(8px); /* More pronounced slide effect */
+    transform: translateX(8px);
 }
 
 nav.sidebar button.active {
-    background-color: #e74c3c; /* Red active tab */
+    background-color: #e74c3c;
     font-weight: bold;
     color: white;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3); /* Inner shadow for active state */
-    transform: translateX(0); /* Reset transform for active */
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+    transform: translateX(0);
 }
 
 /* Main Content Area */
 main.content-area {
-    flex: 1; /* Main content area takes remaining space */
-    padding: 2rem; /* Increased padding for main content */
-    overflow-y: auto; /* Enable scrolling for content if it overflows */
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
 }
 
 section {
     display: none;
-    margin-bottom: 2.5rem; /* Increased margin */
-    background-color: #2a2a2a; /* Darker section background */
-    padding: 2.5rem; /* Increased padding */
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* More prominent shadow */
+    margin-bottom: 2.5rem;
+    background-color: #2a2a2a;
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 section.active {
     display: block;
 }
 
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.add-btn {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.add-btn:hover {
+    background-color: #2ecc71;
+    transform: translateY(-2px);
+}
+
 h2 {
-    margin-bottom: 1.8rem; /* Increased margin */
-    color: #e74c3c; /* Red heading */
-    border-bottom: 3px solid #c0392b; /* Thicker darker red border */
-    padding-bottom: 1rem; /* Increased padding */
-    font-size: 2.2rem; /* Larger font size */
+    margin-bottom: 1.8rem;
+    color: #e74c3c;
+    border-bottom: 3px solid #c0392b;
+    padding-bottom: 1rem;
+    font-size: 2.2rem;
 }
 
 h3 {
-    margin: 1.8rem 0 1.2rem; /* Adjusted margin */
-    color: #f0f0f0; /* Lighter sub-heading color */
+    margin: 1.8rem 0 1.2rem;
+    color: #f0f0f0;
     font-size: 1.6rem;
 }
 
 /* Form Styles */
 .form-container {
-    background-color: #3a3a3a; /* Darker form background */
-    padding: 2.2rem; /* Increased padding */
-    border-radius: 10px; /* More rounded corners */
+    background-color: #3a3a3a;
+    padding: 2.2rem;
+    border-radius: 10px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
     margin-bottom: 2.2rem;
 }
 
 .form-group {
-    margin-bottom: 1.4rem; /* Increased margin */
+    margin-bottom: 1.4rem;
 }
 
 label {
     display: block;
-    margin-bottom: 0.7rem; /* Increased margin */
+    margin-bottom: 0.7rem;
     font-weight: bold;
-    color: #e0e0e0; /* Lighter label color */
+    color: #e0e0e0;
 }
 
 input, select, textarea {
     width: 100%;
-    padding: 1.1rem; /* Increased padding */
-    border: 1px solid #666; /* Slightly lighter dark border */
-    border-radius: 7px; /* More rounded corners */
-    font-size: 1.15rem; /* Slightly larger font size */
-    background-color: #4a4a4a; /* Darker input background */
-    color: #f0f0f0; /* Lighter input text */
+    padding: 1.1rem;
+    border: 1px solid #666;
+    border-radius: 7px;
+    font-size: 1.15rem;
+    background-color: #4a4a4a;
+    color: #f0f0f0;
 }
 
 textarea {
-    min-height: 130px; /* Increased min-height */
+    min-height: 130px;
     resize: vertical;
 }
 
 button[type="submit"] {
-    background-color: #e74c3c; /* Red submit button */
+    background-color: #e74c3c;
     color: white;
     border: none;
-    padding: 1.1rem 2.2rem; /* Increased padding */
-    border-radius: 8px; /* Rounded corners */
+    padding: 1.1rem 2.2rem;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 1.15rem; /* Larger font size */
+    font-size: 1.15rem;
     transition: background-color 0.3s, transform 0.2s;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 button[type="submit"]:hover {
-    background-color: #c0392b; /* Darker red on hover */
-    transform: translateY(-3px); /* More pronounced lift effect */
+    background-color: #c0392b;
+    transform: translateY(-3px);
 }
 
 /* Table Styles */
 .table-container {
-    background-color: #3a3a3a; /* Darker table container background */
-    padding: 2.2rem; /* Increased padding */
-    border-radius: 10px; /* More rounded corners */
+    background-color: #3a3a3a;
+    padding: 2.2rem;
+    border-radius: 10px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
     overflow-x: auto;
 }
@@ -309,45 +325,44 @@ button[type="submit"]:hover {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1.8rem; /* Increased margin */
+    margin-top: 1.8rem;
 }
 
 th, td {
-    padding: 1.1rem; /* Increased padding */
+    padding: 1.1rem;
     text-align: left;
-    border-bottom: 1px solid #555; /* Darker border */
-    color: #e0e0e0; /* Lighter text color */
+    border-bottom: 1px solid #555;
+    color: #e0e0e0;
 }
 
 th {
-    background-color: #4a4a4a; /* Darker header background */
+    background-color: #4a4a4a;
     font-weight: bold;
     color: #f0f0f0;
 }
 
 tr:hover {
-    background-color: #444; /* Darker hover background */
+    background-color: #444;
 }
 
-/* Specific styles for action buttons in table cells */
-td:last-child { /* Target the last column which contains action buttons */
-    white-space: nowrap; /* Prevent buttons from wrapping */
-    min-width: 150px; /* Ensure enough space for two buttons */
+td:last-child {
+    white-space: nowrap;
+    min-width: 150px;
 }
 
 .action-btn {
-    padding: 0.7rem 1.2rem; /* Slightly larger padding for better touch targets */
-    margin-right: 0.8rem; /* Increased margin for better separation */
+    padding: 0.7rem 1.2rem;
+    margin-right: 0.8rem;
     border: none;
-    border-radius: 6px; /* Slightly more rounded */
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 1rem; /* Slightly larger font size */
+    font-size: 1rem;
     transition: background-color 0.3s, transform 0.2s;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* More prominent shadow */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .edit-btn {
-    background-color: #f1c40f; /* Yellow edit button */
+    background-color: #f1c40f;
     color: #333;
 }
 
@@ -357,7 +372,7 @@ td:last-child { /* Target the last column which contains action buttons */
 }
 
 .delete-btn {
-    background-color: #e74c3c; /* Red delete button */
+    background-color: #e74c3c;
     color: white;
 }
 
@@ -370,8 +385,8 @@ td:last-child { /* Target the last column which contains action buttons */
 .filter-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.8rem; /* Increased gap */
-    margin-bottom: 1.8rem; /* Increased margin */
+    gap: 1.8rem;
+    margin-bottom: 1.8rem;
     align-items: center;
     background-color: #3a3a3a;
     padding: 1.8rem;
@@ -386,17 +401,17 @@ td:last-child { /* Target the last column which contains action buttons */
 
 .filter-container select {
     width: auto;
-    min-width: 200px; /* Increased min-width */
+    min-width: 200px;
     background-color: #4a4a4a;
     color: #f0f0f0;
 }
 
 #applyFilter {
-    background-color: #e74c3c; /* Red filter button */
+    background-color: #e74c3c;
     color: white;
     border: none;
-    padding: 1rem 1.8rem; /* Increased padding */
-    border-radius: 7px; /* Rounded corners */
+    padding: 1rem 1.8rem;
+    border-radius: 7px;
     cursor: pointer;
     font-size: 1.1rem;
     transition: background-color 0.3s, transform 0.2s;
@@ -404,74 +419,74 @@ td:last-child { /* Target the last column which contains action buttons */
 }
 
 #applyFilter:hover {
-    background-color: #c0392b; /* Darker red on hover */
+    background-color: #c0392b;
     transform: translateY(-3px);
 }
 
 /* Footer Styles */
 footer {
-    background-color: #0d0d0d; /* Changed to very dark grey/black */
+    background-color: #0d0d0d;
     color: white;
     text-align: center;
-    padding: 1.8rem 0; /* Increased padding */
-    margin-top: auto; /* Push footer to the bottom */
-    border-top-left-radius: 10px; /* Rounded corners */
+    padding: 1.8rem 0;
+    margin-top: auto;
+    border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-    flex-shrink: 0; /* Prevent footer from shrinking */
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
 }
 
 /* Modal Styles */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000; /* Higher z-index */
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
-    backdrop-filter: blur(8px); /* More blurred background */
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
 }
 
 .modal-content {
-    background-color: #3a3a3a; /* Darker modal background */
-    margin: 6% auto; /* Adjusted margin for better centering */
-    padding: 3rem; /* Increased padding */
-    border: 1px solid #555; /* Darker border */
+    background-color: #3a3a3a;
+    margin: 6% auto;
+    padding: 3rem;
+    border: 1px solid #555;
     width: 90%;
-    max-width: 750px; /* Increased max-width */
-    border-radius: 12px; /* More rounded corners */
+    max-width: 750px;
+    border-radius: 12px;
     position: relative;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5); /* More prominent shadow */
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
 }
 
 .close {
     color: #aaa;
     float: right;
-    font-size: 2.2rem; /* Larger close button */
+    font-size: 2.2rem;
     font-weight: bold;
     cursor: pointer;
     position: absolute;
-    right: 1.8rem; /* Adjusted position */
-    top: 1.2rem; /* Adjusted position */
+    right: 1.8rem;
+    top: 1.2rem;
     transition: color 0.3s;
 }
 
 .close:hover {
-    color: white; /* White on hover */
+    color: white;
 }
 
 /* Net Total Row */
 .net-total {
     font-weight: bold;
-    background-color: #4a4a4a; /* Darker background for net total */
+    background-color: #4a4a4a;
     color: #f0f0f0;
 }
 
 .net-total td {
-    border-top: 2px solid #666; /* Thicker border */
+    border-top: 2px solid #666;
 }
 
 /* Responsive Styles */
@@ -480,48 +495,54 @@ footer {
         font-size: 1.8rem;
     }
     header .logo {
-        height: 70px; /* Adjust logo size for smaller screens */
+        height: 70px;
         margin-right: 10px;
     }
 
     .app-container {
-        flex-direction: column; /* Stack sidebar and content vertically */
+        flex-direction: column;
         margin: 0.5rem auto;
-        border-radius: 0; /* Remove app-container radius on small screens */
-        box-shadow: none; /* Remove app-container shadow on small screens */
+        border-radius: 0;
+        box-shadow: none;
     }
 
     nav.sidebar {
-        min-width: unset; /* Remove fixed width */
-        width: 100%; /* Take full width */
-        flex-direction: row; /* Buttons side-by-side */
-        padding: 0.8rem 0.5rem; /* Adjusted padding */
+        min-width: unset;
+        width: 100%;
+        flex-direction: row;
+        padding: 0.8rem 0.5rem;
         border-right: none;
-        border-bottom: 1px solid #444; /* Add bottom border */
-        border-radius: 0; /* Remove specific radii for full width */
+        border-bottom: 1px solid #444;
+        border-radius: 0;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
 
     nav.sidebar button {
-        flex: 1; /* Distribute space evenly */
-        text-align: center; /* Center text */
-        margin: 0 5px; /* Add horizontal margin */
-        padding: 0.9rem; /* Adjusted padding */
+        flex: 1;
+        text-align: center;
+        margin: 0 5px;
+        padding: 0.9rem;
         font-size: 1rem;
     }
     nav.sidebar button:hover {
-        transform: none; /* Remove slide effect */
+        transform: none;
     }
     nav.sidebar button.active {
-        transform: none; /* Reset transform for active */
+        transform: none;
     }
     
     main.content-area {
-        padding: 1rem; /* Adjusted padding */
+        padding: 1rem;
     }
 
     section {
-        padding: 1.5rem; /* Adjusted padding */
+        padding: 1.5rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
     }
     
     .filter-container {
@@ -541,7 +562,7 @@ footer {
     }
 
     .form-container, .table-container {
-        padding: 1.5rem; /* Adjusted padding */
+        padding: 1.5rem;
     }
 
     h2 {

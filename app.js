@@ -118,6 +118,25 @@ function setActiveTab(tab, section) {
     section.classList.add('active');
 }
 
+// Add button event listeners
+document.getElementById('addVehicleBtn').addEventListener('click', () => {
+    document.getElementById('vehicleForm').reset();
+    document.getElementById('addVehicleModal').style.display = 'block';
+});
+
+document.getElementById('addDriverBtn').addEventListener('click', () => {
+    document.getElementById('driverForm').reset();
+    document.getElementById('addDriverModal').style.display = 'block';
+});
+
+document.getElementById('addHireBtn').addEventListener('click', () => {
+    document.getElementById('hireForm').reset();
+    // Set current date as default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('hireDate').value = today;
+    document.getElementById('addHireModal').style.display = 'block';
+});
+
 // Vehicle Management
 const vehicleForm = document.getElementById('vehicleForm');
 vehicleForm.addEventListener('submit', async (e) => {
@@ -132,6 +151,7 @@ vehicleForm.addEventListener('submit', async (e) => {
         };
         await db.collection('vehicles').add(vehicle);
         vehicleForm.reset();
+        document.getElementById('addVehicleModal').style.display = 'none';
         showMessage('Vehicle added successfully!', 'success');
     } catch (error) {
         console.error("Error adding vehicle:", error);
@@ -153,6 +173,7 @@ driverForm.addEventListener('submit', async (e) => {
         };
         await db.collection('drivers').add(driver);
         driverForm.reset();
+        document.getElementById('addDriverModal').style.display = 'none';
         showMessage('Driver added successfully!', 'success');
     } catch (error) {
         console.error("Error adding driver:", error);
@@ -165,9 +186,6 @@ const hireForm = document.getElementById('hireForm');
 hireForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
-        document.getElementById('fuelLiters').removeAttribute('required');
-        document.getElementById('fuelPricePerLiter').removeAttribute('required');
-        
         const vehicleId = document.getElementById('hireVehicle').value;
         const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
         
@@ -205,6 +223,7 @@ hireForm.addEventListener('submit', async (e) => {
         
         await db.collection('hires').add(hire);
         hireForm.reset();
+        document.getElementById('addHireModal').style.display = 'none';
         showMessage('Hire record added successfully!', 'success');
     } catch (error) {
         console.error("Error adding hire:", error);
@@ -739,18 +758,10 @@ window.addEventListener('click', (e) => {
 
 // Initialize the app
 function initApp() {
-    document.getElementById('fuelLiters').removeAttribute('required');
-    document.getElementById('fuelPricePerLiter').removeAttribute('required');
-    
     // Load all data
     loadVehicles();
     loadDrivers();
     loadHires();
-    
-    // Set current date as default
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('hireDate').value = today;
-    document.getElementById('editHireDate').value = today;
     
     // Initialize totals display
     updateTotals(0, 0);

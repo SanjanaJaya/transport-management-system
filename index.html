@@ -51,34 +51,11 @@
             <main class="content-area">
                 <!-- Vehicles Section -->
                 <section id="vehiclesSection" class="active">
-                    <h2>Vehicle Management</h2>
-                    <div class="form-container">
-                        <h3>Add New Vehicle</h3>
-                        <form id="vehicleForm">
-                            <div class="form-group">
-                                <label for="vehicleNumber">Vehicle Number:</label>
-                                <input type="text" id="vehicleNumber" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="vehicleSize">Size:</label>
-                                <input type="text" id="vehicleSize" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="perKmPrice">Price per KM (LKR):</label>
-                                <input type="number" id="perKmPrice" step="0.01" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="ownership">Ownership:</label>
-                                <select id="ownership" required>
-                                    <option value="Company">Company Owned</option>
-                                    <option value="Rented">Rented</option>
-                                </select>
-                            </div>
-                            <button type="submit">Add Vehicle</button>
-                        </form>
+                    <div class="section-header">
+                        <h2>Vehicle Management</h2>
+                        <button id="addVehicleBtn" class="add-btn">+ Add Vehicle</button>
                     </div>
                     <div class="table-container">
-                        <h3>Vehicle List</h3>
                         <table id="vehiclesTable">
                             <thead>
                                 <tr>
@@ -98,31 +75,11 @@
 
                 <!-- Drivers Section -->
                 <section id="driversSection">
-                    <h2>Driver Management</h2>
-                    <div class="form-container">
-                        <h3>Add New Driver</h3>
-                        <form id="driverForm">
-                            <div class="form-group">
-                                <label for="driverName">Name:</label>
-                                <input type="text" id="driverName" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="licenseNumber">License Number:</label>
-                                <input type="text" id="licenseNumber" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="driverAge">Age:</label>
-                                <input type="number" id="driverAge" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="driverAddress">Address:</label>
-                                <textarea id="driverAddress" required></textarea>
-                            </div>
-                            <button type="submit">Add Driver</button>
-                        </form>
+                    <div class="section-header">
+                        <h2>Driver Management</h2>
+                        <button id="addDriverBtn" class="add-btn">+ Add Driver</button>
                     </div>
                     <div class="table-container">
-                        <h3>Driver List</h3>
                         <table id="driversTable">
                             <thead>
                                 <tr>
@@ -142,68 +99,11 @@
 
                 <!-- Hires Section -->
                 <section id="hiresSection">
-                    <h2>Vehicle Hire Management</h2>
-                    <div class="form-container">
-                        <h3>Add New Hire</h3>
-                        <form id="hireForm">
-                            <div class="form-group">
-                                <label for="hireVehicle">Vehicle:</label>
-                                <select id="hireVehicle" required>
-                                    <option value="">Select Vehicle</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="hireMonth">Month:</label>
-                                <select id="hireMonth" required>
-                                    <option value="January">January</option>
-                                    <option value="February">February</option>
-                                    <option value="March">March</option>
-                                    <option value="April">April</option>
-                                    <option value="May">May</option>
-                                    <option value="June">June</option>
-                                    <option value="July">July</option>
-                                    <option value="August">August</option>
-                                    <option value="September">September</option>
-                                    <option value="October">October</option>
-                                    <option value="November">November</option>
-                                    <option value="December">December</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="fromLocation">From:</label>
-                                <input type="text" id="fromLocation" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="toLocation">To:</label>
-                                <input type="text" id="toLocation" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="distance">Distance (KM):</label>
-                                <input type="number" id="distance" step="0.1" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="fuelLiters">Fuel (Liters):</label>
-                                <input type="number" id="fuelLiters" step="0.1" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="fuelPricePerLiter">Fuel Price per Liter (LKR):</label>
-                                <input type="number" id="fuelPricePerLiter" step="0.01" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="hireDate">Date:</label>
-                                <input type="date" id="hireDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="hireDriver">Driver (Optional):</label>
-                                <select id="hireDriver">
-                                    <option value="">Select Driver</option>
-                                </select>
-                            </div>
-                            <button type="submit">Add Hire</button>
-                        </form>
+                    <div class="section-header">
+                        <h2>Vehicle Hire Management</h2>
+                        <button id="addHireBtn" class="add-btn">+ Add Hire</button>
                     </div>
                     <div class="table-container">
-                        <h3>Hire Records</h3>
                         <div class="filter-container">
                             <label for="filterMonth">Filter by Month:</label>
                             <select id="filterMonth">
@@ -267,6 +167,127 @@
                     </div>
                 </section>
             </main>
+        </div>
+
+        <!-- Add Vehicle Modal -->
+        <div id="addVehicleModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Add New Vehicle</h3>
+                <form id="vehicleForm">
+                    <div class="form-group">
+                        <label for="vehicleNumber">Vehicle Number:</label>
+                        <input type="text" id="vehicleNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleSize">Size:</label>
+                        <input type="text" id="vehicleSize" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="perKmPrice">Price per KM (LKR):</label>
+                        <input type="number" id="perKmPrice" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ownership">Ownership:</label>
+                        <select id="ownership" required>
+                            <option value="Company">Company Owned</option>
+                            <option value="Rented">Rented</option>
+                        </select>
+                    </div>
+                    <button type="submit">Add Vehicle</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Driver Modal -->
+        <div id="addDriverModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Add New Driver</h3>
+                <form id="driverForm">
+                    <div class="form-group">
+                        <label for="driverName">Name:</label>
+                        <input type="text" id="driverName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="licenseNumber">License Number:</label>
+                        <input type="text" id="licenseNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="driverAge">Age:</label>
+                        <input type="number" id="driverAge" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="driverAddress">Address:</label>
+                        <textarea id="driverAddress" required></textarea>
+                    </div>
+                    <button type="submit">Add Driver</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Hire Modal -->
+        <div id="addHireModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Add New Hire</h3>
+                <form id="hireForm">
+                    <div class="form-group">
+                        <label for="hireVehicle">Vehicle:</label>
+                        <select id="hireVehicle" required>
+                            <option value="">Select Vehicle</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="hireMonth">Month:</label>
+                        <select id="hireMonth" required>
+                            <option value="January">January</option>
+                            <option value="February">February</option>
+                            <option value="March">March</option>
+                            <option value="April">April</option>
+                            <option value="May">May</option>
+                            <option value="June">June</option>
+                            <option value="July">July</option>
+                            <option value="August">August</option>
+                            <option value="September">September</option>
+                            <option value="October">October</option>
+                            <option value="November">November</option>
+                            <option value="December">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fromLocation">From:</label>
+                        <input type="text" id="fromLocation" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="toLocation">To:</label>
+                        <input type="text" id="toLocation" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="distance">Distance (KM):</label>
+                        <input type="number" id="distance" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fuelLiters">Fuel (Liters):</label>
+                        <input type="number" id="fuelLiters" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="fuelPricePerLiter">Fuel Price per Liter (LKR):</label>
+                        <input type="number" id="fuelPricePerLiter" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="hireDate">Date:</label>
+                        <input type="date" id="hireDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hireDriver">Driver (Optional):</label>
+                        <select id="hireDriver">
+                            <option value="">Select Driver</option>
+                        </select>
+                    </div>
+                    <button type="submit">Add Hire</button>
+                </form>
+            </div>
         </div>
 
         <!-- Edit Modals -->
@@ -370,11 +391,11 @@
                     </div>
                     <div class="form-group">
                         <label for="editFuelLiters">Fuel (Liters):</label>
-                        <input type="number" id="editFuelLiters" step="0.1" required>
+                        <input type="number" id="editFuelLiters" step="0.1">
                     </div>
                     <div class="form-group">
                         <label for="editFuelPricePerLiter">Fuel Price per Liter (LKR):</label>
-                        <input type="number" id="editFuelPricePerLiter" step="0.01" required>
+                        <input type="number" id="editFuelPricePerLiter" step="0.01">
                     </div>
                     <div class="form-group">
                         <label for="editHireDate">Date:</label>
