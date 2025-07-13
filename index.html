@@ -12,127 +12,202 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <header>
-        <!-- Logo -->
-        <img src="https://i.postimg.cc/g0rNcKpN/LOGO.png" alt="Jayasooriya Enterprises Logo" class="logo">
-        <h1>JAYASOORIYA ENTERPRISES</h1>
-        <!-- Removed H2: <h2>Transport Management System</h2> -->
-    </header>
-
-    <div class="app-container">
-        <nav class="sidebar">
-            <button id="vehiclesTab" class="active">Vehicles</button>
-            <button id="driversTab">Drivers</button>
-            <button id="hiresTab">Vehicle Hires</button>
-        </nav>
-
-        <main class="content-area">
-            <!-- Vehicles Section -->
-            <section id="vehiclesSection" class="active">
-                <h2>Vehicle Management</h2>
-                <div class="form-container">
-                    <h3>Add New Vehicle</h3>
-                    <form id="vehicleForm">
-                        <div class="form-group">
-                            <label for="vehicleNumber">Vehicle Number:</label>
-                            <input type="text" id="vehicleNumber" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="vehicleSize">Size:</label>
-                            <input type="text" id="vehicleSize" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="perKmPrice">Price per KM (LKR):</label>
-                            <input type="number" id="perKmPrice" step="0.01" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="ownership">Ownership:</label>
-                            <select id="ownership" required>
-                                <option value="Company">Company Owned</option>
-                                <option value="Rented">Rented</option>
-                            </select>
-                        </div>
-                        <button type="submit">Add Vehicle</button>
-                    </form>
+    <!-- Login Section -->
+    <div id="loginSection" class="login-container">
+        <div class="login-box">
+            <img src="https://i.postimg.cc/g0rNcKpN/LOGO.png" alt="Jayasooriya Enterprises Logo" class="login-logo">
+            <h2>JAYASOORIYA ENTERPRISES</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" required>
                 </div>
-                <div class="table-container">
-                    <h3>Vehicle List</h3>
-                    <table id="vehiclesTable">
-                        <thead>
-                            <tr>
-                                <th>Vehicle Number</th>
-                                <th>Size</th>
-                                <th>Price per KM</th>
-                                <th>Ownership</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="vehiclesList">
-                            <!-- Vehicles will be added here dynamically -->
-                        </tbody>
-                    </table>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" required>
                 </div>
-            </section>
+                <button type="submit">Login</button>
+                <p id="loginError" class="error-message"></p>
+            </form>
+        </div>
+    </div>
 
-            <!-- Drivers Section -->
-            <section id="driversSection">
-                <h2>Driver Management</h2>
-                <div class="form-container">
-                    <h3>Add New Driver</h3>
-                    <form id="driverForm">
-                        <div class="form-group">
-                            <label for="driverName">Name:</label>
-                            <input type="text" id="driverName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="licenseNumber">License Number:</label>
-                            <input type="text" id="licenseNumber" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="driverAge">Age:</label>
-                            <input type="number" id="driverAge" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="driverAddress">Address:</label>
-                            <textarea id="driverAddress" required></textarea>
-                        </div>
-                        <button type="submit">Add Driver</button>
-                    </form>
-                </div>
-                <div class="table-container">
-                    <h3>Driver List</h3>
-                    <table id="driversTable">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>License Number</th>
-                                <th>Age</th>
-                                <th>Address</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="driversList">
-                            <!-- Drivers will be added here dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+    <!-- Main App Section (hidden by default) -->
+    <div id="appSection" style="display: none;">
+        <header>
+            <!-- Logo -->
+            <img src="https://i.postimg.cc/g0rNcKpN/LOGO.png" alt="Jayasooriya Enterprises Logo" class="logo">
+            <h1>JAYASOORIYA ENTERPRISES</h1>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </header>
 
-            <!-- Hires Section -->
-            <section id="hiresSection">
-                <h2>Vehicle Hire Management</h2>
-                <div class="form-container">
-                    <h3>Add New Hire</h3>
-                    <form id="hireForm">
-                        <div class="form-group">
-                            <label for="hireVehicle">Vehicle:</label>
-                            <select id="hireVehicle" required>
-                                <option value="">Select Vehicle</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="hireMonth">Month:</label>
-                            <select id="hireMonth" required>
+        <div class="app-container">
+            <nav class="sidebar">
+                <button id="vehiclesTab" class="active">Vehicles</button>
+                <button id="driversTab">Drivers</button>
+                <button id="hiresTab">Vehicle Hires</button>
+            </nav>
+
+            <main class="content-area">
+                <!-- Vehicles Section -->
+                <section id="vehiclesSection" class="active">
+                    <h2>Vehicle Management</h2>
+                    <div class="form-container">
+                        <h3>Add New Vehicle</h3>
+                        <form id="vehicleForm">
+                            <div class="form-group">
+                                <label for="vehicleNumber">Vehicle Number:</label>
+                                <input type="text" id="vehicleNumber" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="vehicleSize">Size:</label>
+                                <input type="text" id="vehicleSize" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="perKmPrice">Price per KM (LKR):</label>
+                                <input type="number" id="perKmPrice" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ownership">Ownership:</label>
+                                <select id="ownership" required>
+                                    <option value="Company">Company Owned</option>
+                                    <option value="Rented">Rented</option>
+                                </select>
+                            </div>
+                            <button type="submit">Add Vehicle</button>
+                        </form>
+                    </div>
+                    <div class="table-container">
+                        <h3>Vehicle List</h3>
+                        <table id="vehiclesTable">
+                            <thead>
+                                <tr>
+                                    <th>Vehicle Number</th>
+                                    <th>Size</th>
+                                    <th>Price per KM</th>
+                                    <th>Ownership</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehiclesList">
+                                <!-- Vehicles will be added here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Drivers Section -->
+                <section id="driversSection">
+                    <h2>Driver Management</h2>
+                    <div class="form-container">
+                        <h3>Add New Driver</h3>
+                        <form id="driverForm">
+                            <div class="form-group">
+                                <label for="driverName">Name:</label>
+                                <input type="text" id="driverName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="licenseNumber">License Number:</label>
+                                <input type="text" id="licenseNumber" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="driverAge">Age:</label>
+                                <input type="number" id="driverAge" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="driverAddress">Address:</label>
+                                <textarea id="driverAddress" required></textarea>
+                            </div>
+                            <button type="submit">Add Driver</button>
+                        </form>
+                    </div>
+                    <div class="table-container">
+                        <h3>Driver List</h3>
+                        <table id="driversTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>License Number</th>
+                                    <th>Age</th>
+                                    <th>Address</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="driversList">
+                                <!-- Drivers will be added here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Hires Section -->
+                <section id="hiresSection">
+                    <h2>Vehicle Hire Management</h2>
+                    <div class="form-container">
+                        <h3>Add New Hire</h3>
+                        <form id="hireForm">
+                            <div class="form-group">
+                                <label for="hireVehicle">Vehicle:</label>
+                                <select id="hireVehicle" required>
+                                    <option value="">Select Vehicle</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="hireMonth">Month:</label>
+                                <select id="hireMonth" required>
+                                    <option value="January">January</option>
+                                    <option value="February">February</option>
+                                    <option value="March">March</option>
+                                    <option value="April">April</option>
+                                    <option value="May">May</option>
+                                    <option value="June">June</option>
+                                    <option value="July">July</option>
+                                    <option value="August">August</option>
+                                    <option value="September">September</option>
+                                    <option value="October">October</option>
+                                    <option value="November">November</option>
+                                    <option value="December">December</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="fromLocation">From:</label>
+                                <input type="text" id="fromLocation" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="toLocation">To:</label>
+                                <input type="text" id="toLocation" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="distance">Distance (KM):</label>
+                                <input type="number" id="distance" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="fuelLiters">Fuel (Liters):</label>
+                                <input type="number" id="fuelLiters" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="fuelPricePerLiter">Fuel Price per Liter (LKR):</label>
+                                <input type="number" id="fuelPricePerLiter" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="hireDate">Date:</label>
+                                <input type="date" id="hireDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="hireDriver">Driver (Optional):</label>
+                                <select id="hireDriver">
+                                    <option value="">Select Driver</option>
+                                </select>
+                            </div>
+                            <button type="submit">Add Hire</button>
+                        </form>
+                    </div>
+                    <div class="table-container">
+                        <h3>Hire Records</h3>
+                        <div class="filter-container">
+                            <label for="filterMonth">Filter by Month:</label>
+                            <select id="filterMonth">
+                                <option value="All">All Months</option>
                                 <option value="January">January</option>
                                 <option value="February">February</option>
                                 <option value="March">March</option>
@@ -146,46 +221,127 @@
                                 <option value="November">November</option>
                                 <option value="December">December</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="fromLocation">From:</label>
-                            <input type="text" id="fromLocation" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="toLocation">To:</label>
-                            <input type="text" id="toLocation" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="distance">Distance (KM):</label>
-                            <input type="number" id="distance" step="0.1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="fuelLiters">Fuel (Liters):</label>
-                            <input type="number" id="fuelLiters" step="0.1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="fuelPricePerLiter">Fuel Price per Liter (LKR):</label>
-                            <input type="number" id="fuelPricePerLiter" step="0.01" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="hireDate">Date:</label>
-                            <input type="date" id="hireDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="hireDriver">Driver (Optional):</label>
-                            <select id="hireDriver">
-                                <option value="">Select Driver</option>
+                            <label for="filterVehicle">Filter by Vehicle:</label>
+                            <select id="filterVehicle">
+                                <option value="All">All Vehicles</option>
                             </select>
+                            <button id="applyFilter">Apply Filter</button>
                         </div>
-                        <button type="submit">Add Hire</button>
-                    </form>
-                </div>
-                <div class="table-container">
-                    <h3>Hire Records</h3>
-                    <div class="filter-container">
-                        <label for="filterMonth">Filter by Month:</label>
-                        <select id="filterMonth">
-                            <option value="All">All Months</option>
+                        <table id="hiresTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Vehicle</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Distance (KM)</th>
+                                    <th>Fuel (L)</th>
+                                    <th>Fuel Price/L</th>
+                                    <th>Fuel Cost</th>
+                                    <th>Price/KM</th>
+                                    <th>Hire Amount</th>
+                                    <th>Driver</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hiresList">
+                                <!-- Hires will be added here dynamically -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="7">Total</td>
+                                    <td id="totalFuelCost">0.00</td>
+                                    <td></td>
+                                    <td id="totalHireAmount">0.00</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr class="net-total">
+                                    <td colspan="9">Net Profit (Hire Amount - Fuel Cost)</td>
+                                    <td id="netProfit">0.00</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- Edit Modals -->
+        <div id="editVehicleModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Edit Vehicle</h3>
+                <form id="editVehicleForm">
+                    <input type="hidden" id="editVehicleId">
+                    <div class="form-group">
+                        <label for="editVehicleNumber">Vehicle Number:</label>
+                        <input type="text" id="editVehicleNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editVehicleSize">Size:</label>
+                        <input type="text" id="editVehicleSize" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPerKmPrice">Price per KM (LKR):</label>
+                        <input type="number" id="editPerKmPrice" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editOwnership">Ownership:</label>
+                        <select id="editOwnership" required>
+                            <option value="Company">Company Owned</option>
+                            <option value="Rented">Rented</option>
+                        </select>
+                    </div>
+                    <button type="submit">Update Vehicle</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="editDriverModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Edit Driver</h3>
+                <form id="editDriverForm">
+                    <input type="hidden" id="editDriverId">
+                    <div class="form-group">
+                        <label for="editDriverName">Name:</label>
+                        <input type="text" id="editDriverName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLicenseNumber">License Number:</label>
+                        <input type="text" id="editLicenseNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDriverAge">Age:</label>
+                        <input type="number" id="editDriverAge" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDriverAddress">Address:</label>
+                        <textarea id="editDriverAddress" required></textarea>
+                    </div>
+                    <button type="submit">Update Driver</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="editHireModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Edit Hire</h3>
+                <form id="editHireForm">
+                    <input type="hidden" id="editHireId">
+                    <div class="form-group">
+                        <label for="editHireVehicle">Vehicle:</label>
+                        <select id="editHireVehicle" required>
+                            <option value="">Select Vehicle</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editHireMonth">Month:</label>
+                        <select id="editHireMonth" required>
                             <option value="January">January</option>
                             <option value="February">February</option>
                             <option value="March">March</option>
@@ -199,179 +355,46 @@
                             <option value="November">November</option>
                             <option value="December">December</option>
                         </select>
-                        <label for="filterVehicle">Filter by Vehicle:</label>
-                        <select id="filterVehicle">
-                            <option value="All">All Vehicles</option>
-                        </select>
-                        <button id="applyFilter">Apply Filter</button>
                     </div>
-                    <table id="hiresTable">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Vehicle</th>
-                                <th>From</th>
-                                <th>To</th>
-                                <th>Distance (KM)</th>
-                                <th>Fuel (L)</th>
-                                <th>Fuel Price/L</th>
-                                <th>Fuel Cost</th>
-                                <th>Price/KM</th>
-                                <th>Hire Amount</th>
-                                <th>Driver</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="hiresList">
-                            <!-- Hires will be added here dynamically -->
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="7">Total</td>
-                                <td id="totalFuelCost">0.00</td>
-                                <td></td>
-                                <td id="totalHireAmount">0.00</td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            <tr class="net-total">
-                                <td colspan="9">Net Profit (Hire Amount - Fuel Cost)</td>
-                                <td id="netProfit">0.00</td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Edit Modals -->
-    <div id="editVehicleModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Edit Vehicle</h3>
-            <form id="editVehicleForm">
-                <input type="hidden" id="editVehicleId">
-                <div class="form-group">
-                    <label for="editVehicleNumber">Vehicle Number:</label>
-                    <input type="text" id="editVehicleNumber" required>
-                </div>
-                <div class="form-group">
-                    <label for="editVehicleSize">Size:</label>
-                    <input type="text" id="editVehicleSize" required>
-                </div>
-                <div class="form-group">
-                    <label for="editPerKmPrice">Price per KM (LKR):</label>
-                    <input type="number" id="editPerKmPrice" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label for="editOwnership">Ownership:</label>
-                    <select id="editOwnership" required>
-                        <option value="Company">Company Owned</option>
-                        <option value="Rented">Rented</option>
-                    </select>
-                </div>
-                <button type="submit">Update Vehicle</button>
-            </form>
+                    <div class="form-group">
+                        <label for="editFromLocation">From:</label>
+                        <input type="text" id="editFromLocation" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editToLocation">To:</label>
+                        <input type="text" id="editToLocation" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDistance">Distance (KM):</label>
+                        <input type="number" id="editDistance" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editFuelLiters">Fuel (Liters):</label>
+                        <input type="number" id="editFuelLiters" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editFuelPricePerLiter">Fuel Price per Liter (LKR):</label>
+                        <input type="number" id="editFuelPricePerLiter" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editHireDate">Date:</label>
+                        <input type="date" id="editHireDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editHireDriver">Driver (Optional):</label>
+                        <select id="editHireDriver">
+                            <option value="">Select Driver</option>
+                        </select>
+                    </div>
+                    <button type="submit">Update Hire</button>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <div id="editDriverModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Edit Driver</h3>
-            <form id="editDriverForm">
-                <input type="hidden" id="editDriverId">
-                <div class="form-group">
-                    <label for="editDriverName">Name:</label>
-                    <input type="text" id="editDriverName" required>
-                </div>
-                <div class="form-group">
-                    <label for="editLicenseNumber">License Number:</label>
-                    <input type="text" id="editLicenseNumber" required>
-                </div>
-                <div class="form-group">
-                    <label for="editDriverAge">Age:</label>
-                    <input type="number" id="editDriverAge" required>
-                </div>
-                <div class="form-group">
-                    <label for="editDriverAddress">Address:</label>
-                    <textarea id="editDriverAddress" required></textarea>
-                </div>
-                <button type="submit">Update Driver</button>
-            </form>
-        </div>
+        <footer>
+            <p>&copy; 2025 Jayasooriya Enterprises. All rights reserved.</p>
+        </footer>
     </div>
-
-    <div id="editHireModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Edit Hire</h3>
-            <form id="editHireForm">
-                <input type="hidden" id="editHireId">
-                <div class="form-group">
-                    <label for="editHireVehicle">Vehicle:</label>
-                    <select id="editHireVehicle" required>
-                        <option value="">Select Vehicle</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editHireMonth">Month:</label>
-                    <select id="editHireMonth" required>
-                        <option value="January">January</option>
-                        <option value="February">February</option>
-                        <option value="March">March</option>
-                        <option value="April">April</option>
-                        <option value="May">May</option>
-                        <option value="June">June</option>
-                        <option value="July">July</option>
-                        <option value="August">August</option>
-                        <option value="September">September</option>
-                        <option value="October">October</option>
-                        <option value="November">November</option>
-                        <option value="December">December</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editFromLocation">From:</label>
-                    <input type="text" id="editFromLocation" required>
-                </div>
-                <div class="form-group">
-                    <label for="editToLocation">To:</label>
-                    <input type="text" id="editToLocation" required>
-                </div>
-                <div class="form-group">
-                    <label for="editDistance">Distance (KM):</label>
-                    <input type="number" id="editDistance" step="0.1" required>
-                </div>
-                <div class="form-group">
-                    <label for="editFuelLiters">Fuel (Liters):</label>
-                    <input type="number" id="editFuelLiters" step="0.1" required>
-                </div>
-                <div class="form-group">
-                    <label for="editFuelPricePerLiter">Fuel Price per Liter (LKR):</label>
-                    <input type="number" id="editFuelPricePerLiter" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label for="editHireDate">Date:</label>
-                    <input type="date" id="editHireDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="editHireDriver">Driver (Optional):</label>
-                    <select id="editHireDriver">
-                        <option value="">Select Driver</option>
-                    </select>
-                </div>
-                <button type="submit">Update Hire</button>
-            </form>
-        </div>
-    </div>
-
-    <footer>
-        <p>&copy; 2025 Jayasooriya Enterprises. All rights reserved.</p>
-    </footer>
 
     <!-- Main JavaScript File -->
     <script src="app.js"></script>

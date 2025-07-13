@@ -15,6 +15,117 @@ body {
     min-height: 100vh; /* Ensure body takes full viewport height */
 }
 
+/* Login Styles */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #1a1a1a;
+    padding: 20px;
+}
+
+.login-box {
+    background-color: #2a2a2a;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+}
+
+.login-logo {
+    height: 120px;
+    margin-bottom: 1.5rem;
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.login-box h2 {
+    color: #e74c3c;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+}
+
+.login-box .form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.login-box label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #e0e0e0;
+    font-weight: bold;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #3a3a3a;
+    color: #f0f0f0;
+    font-size: 1rem;
+}
+
+.login-box button {
+    width: 100%;
+    padding: 1rem;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 1rem;
+}
+
+.login-box button:hover {
+    background-color: #c0392b;
+}
+
+.error-message {
+    color: #e74c3c;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    display: none;
+}
+
+/* Header with Logout Button */
+header {
+    position: relative;
+    background-color: #0d0d0d;
+    color: white;
+    padding: 1rem 0;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.logout-btn {
+    position: absolute;
+    right: 20px;
+    padding: 0.5rem 1rem;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.logout-btn:hover {
+    background-color: #c0392b;
+}
+
 header {
     background-color: #0d0d0d; /* Changed to very dark grey/black */
     color: white;

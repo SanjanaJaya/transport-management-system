@@ -1,3 +1,51 @@
+// Login Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const loginSection = document.getElementById('loginSection');
+    const appSection = document.getElementById('appSection');
+    const loginForm = document.getElementById('loginForm');
+    const loginError = document.getElementById('loginError');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Check if user is already logged in
+    if(localStorage.getItem('isLoggedIn')) {
+        loginSection.style.display = 'none';
+        appSection.style.display = 'block';
+        initApp(); // Initialize the app if already logged in
+    } else {
+        loginSection.style.display = 'flex';
+        appSection.style.display = 'none';
+    }
+
+    // Login form submission
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        // Hardcoded credentials
+        if(username === 'admin' && password === '5157') {
+            localStorage.setItem('isLoggedIn', 'true');
+            loginSection.style.display = 'none';
+            appSection.style.display = 'block';
+            initApp(); // Initialize the app after successful login
+        } else {
+            loginError.textContent = 'Invalid username or password';
+            loginError.style.display = 'block';
+        }
+    });
+
+    // Logout functionality
+    logoutBtn.addEventListener('click', function() {
+        localStorage.removeItem('isLoggedIn');
+        loginSection.style.display = 'flex';
+        appSection.style.display = 'none';
+        // Clear form fields
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        loginError.style.display = 'none';
+    });
+});
+
 // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCUjMB_SYfE1g4wTXX8bjqrjVx61dfoL5E",
@@ -670,6 +718,3 @@ function initApp() {
     // Initialize totals display
     updateTotals(0, 0);
 }
-
-// Start the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', initApp);
