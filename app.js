@@ -97,6 +97,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth(); // Initialize Firebase Auth
 
 // DOM Elements
 const vehiclesTab = document.getElementById('vehiclesTab');
@@ -253,6 +254,7 @@ function loadVehicles() {
                 <td>
                     <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
                     <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
+                    <button class="action-btn view-link-btn" data-id="${doc.id}" data-vehicle-number="${vehicle.vehicleNumber}">View Link</button>
                 </td>
             `;
             vehiclesList.appendChild(tr);
@@ -493,7 +495,31 @@ document.addEventListener('click', async (e) => {
             showMessage("Failed to load record for editing. Please check console for details.", 'error');
         }
     }
+
+    // New: Handle "View Link" button click
+    if (e.target.classList.contains('view-link-btn')) {
+        const vehicleId = e.target.getAttribute('data-id');
+        const vehicleNumber = e.target.getAttribute('data-vehicle-number');
+        generateAndCopyPublicLink(vehicleId, vehicleNumber);
+    }
 });
+
+// Function to generate and copy the public view link
+function generateAndCopyPublicLink(vehicleId, vehicleNumber) {
+    // Assuming public-view.html is in the same directory
+    const publicViewUrl = `${window.location.origin}/public-view.html?vehicleId=${vehicleId}`;
+
+    // Create a temporary input element to copy the text
+    const tempInput = document.createElement('input');
+    tempInput.value = publicViewUrl;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+
+    showMessage(`Public view link for ${vehicleNumber} copied to clipboard!`, 'success');
+}
+
 
 // Edit form submissions
 document.getElementById('editVehicleForm').addEventListener('submit', async (e) => {

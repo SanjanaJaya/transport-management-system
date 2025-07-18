@@ -12,6 +12,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <!-- jsPDF libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -42,7 +43,6 @@
         <header>
             <!-- Company Name and Admin/Logout -->
             <div class="header-left">
-                <!-- Logo removed from here as requested -->
                 <span class="header-company-name">JAYASOORIYA ENTERPRISES - TRANSPORT MANAGEMENT SYSTEM</span>
             </div>
             <div class="header-right">
@@ -56,7 +56,6 @@
                 <!-- Sidebar Header with Logo -->
                 <div class="sidebar-header">
                     <img src="https://i.postimg.cc/g0rNcKpN/LOGO.png" alt="Jayasooriya Enterprises Logo" class="sidebar-logo">
-                    <!-- Company name removed from here as requested -->
                 </div>
                 <button id="vehiclesTab" class="active"><i class="fas fa-truck"></i> Vehicles</button>
                 <button id="driversTab"><i class="fas fa-user"></i> Drivers</button>
@@ -71,7 +70,6 @@
                         <button id="addVehicleBtn" class="add-btn"><i class="fas fa-plus-circle"></i> Add Vehicle</button>
                     </div>
                     <p class="section-description">Manage your fleet vehicles and their details</p>
-                    <!-- Search bar for vehicles removed as requested -->
                     <div class="table-container">
                         <table id="vehiclesTable">
                             <thead>
@@ -97,7 +95,6 @@
                         <button id="addDriverBtn" class="add-btn"><i class="fas fa-plus-circle"></i> Add Driver</button>
                     </div>
                     <p class="section-description">Manage your drivers and their personal information</p>
-                    <!-- Search bar for drivers removed as requested -->
                     <div class="table-container">
                         <table id="driversTable">
                             <thead>
