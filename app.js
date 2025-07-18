@@ -306,10 +306,11 @@ function loadHires() {
         hiresList.innerHTML = '';
         let totalFuel = 0;
         let totalHire = 0;
+        let totalDistance = 0; // New variable for total distance
 
         if (snapshot.empty) {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
-            updateTotals(0, 0);
+            updateTotals(0, 0, 0); // Update with total distance
             return;
         }
 
@@ -323,6 +324,7 @@ function loadHires() {
         snapshot.forEach(doc => {
             const hire = doc.data();
             totalHire += hire.hireAmount || 0;
+            totalDistance += hire.distance || 0; // Accumulate total distance
 
             if (hire.fuelCost) {
                 totalFuel += hire.fuelCost;
@@ -349,18 +351,20 @@ function loadHires() {
             hiresList.appendChild(tr);
         });
 
-        updateTotals(totalFuel, totalHire);
+        updateTotals(totalFuel, totalHire, totalDistance); // Pass total distance
     }, error => {
         console.error("Error loading hires:", error);
         document.getElementById('hiresList').innerHTML = '<tr><td colspan="12">Error loading hire records</td></tr>';
-        updateTotals(0, 0);
+        updateTotals(0, 0, 0); // Pass total distance
     });
 }
 
-function updateTotals(fuelCost, hireAmount) {
+// Modified updateTotals function to include totalDistance
+function updateTotals(fuelCost, hireAmount, totalDistance) {
     document.getElementById('totalFuelCost').textContent = fuelCost.toFixed(2);
     document.getElementById('totalHireAmount').textContent = hireAmount.toFixed(2);
     document.getElementById('netProfit').textContent = (hireAmount - fuelCost).toFixed(2);
+    document.getElementById('totalDistance').textContent = totalDistance.toFixed(1); // Update total distance
 }
 
 // Populate vehicle dropdowns
@@ -615,10 +619,11 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
         hiresList.innerHTML = '';
         let totalFuel = 0;
         let totalHire = 0;
+        let totalDistance = 0; // New variable for total distance
 
         if (snapshot.empty) {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found for selected filter</td></tr>';
-            updateTotals(0, 0);
+            updateTotals(0, 0, 0); // Update with total distance
             return;
         }
 
@@ -633,6 +638,7 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
         snapshot.forEach(doc => {
             const hire = doc.data();
             totalHire += hire.hireAmount || 0;
+            totalDistance += hire.distance || 0; // Accumulate total distance
 
             if (hire.fuelCost) {
                 totalFuel += hire.fuelCost;
@@ -659,11 +665,11 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
             hiresList.appendChild(tr);
         });
 
-        updateTotals(totalFuel, totalHire);
+        updateTotals(totalFuel, totalHire, totalDistance); // Pass total distance
     } catch (error) {
         console.error("Error filtering hires:", error);
         document.getElementById('hiresList').innerHTML = '<tr><td colspan="12">Error filtering hire records</td></tr>';
-        updateTotals(0, 0);
+        updateTotals(0, 0, 0); // Pass total distance
         showMessage("Error filtering records. Please check console for details.", 'error');
     }
 });
@@ -786,19 +792,21 @@ function exportHiresToPDF() {
                 const totalFuel = document.getElementById('totalFuelCost').textContent;
                 const totalHire = document.getElementById('totalHireAmount').textContent;
                 const netProfit = document.getElementById('netProfit').textContent;
+                const totalDistance = document.getElementById('totalDistance').textContent; // Get total distance
 
                 let finalY = doc.lastAutoTable.finalY + 10;
 
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
-                doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY);
-                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 7);
+                doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY); // Add total distance
+                doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY + 7);
+                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 14); // Adjusted Y
                 doc.setFontSize(12);
                 doc.setTextColor(231, 76, 60);
-                doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 17);
+                doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 24); // Adjusted Y
 
                 // Add system generated text at the bottom
-                finalY = finalY + 30; // Further adjust Y to place it below totals
+                finalY = finalY + 37; // Further adjust Y to place it below totals
                 doc.setFontSize(10);
                 doc.setTextColor(100, 100, 100); // Grey color for this text
                 doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
@@ -901,19 +909,21 @@ function exportHiresToPDF() {
                 const totalFuel = document.getElementById('totalFuelCost').textContent;
                 const totalHire = document.getElementById('totalHireAmount').textContent;
                 const netProfit = document.getElementById('netProfit').textContent;
+                const totalDistance = document.getElementById('totalDistance').textContent; // Get total distance
 
                 let finalY = doc.lastAutoTable.finalY + 10;
 
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
-                doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY);
-                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 7);
+                doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY); // Add total distance
+                doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY + 7);
+                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 14); // Adjusted Y
                 doc.setFontSize(12);
                 doc.setTextColor(231, 76, 60);
-                doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 17);
+                doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 24); // Adjusted Y
 
                 // Add system generated text at the bottom
-                finalY = finalY + 30; // Further adjust Y to place it below totals
+                finalY = finalY + 37; // Further adjust Y to place it below totals
                 doc.setFontSize(10);
                 doc.setTextColor(100, 100, 100); // Grey color for this text
                 doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
@@ -1026,7 +1036,7 @@ function initApp() {
     loadHires();
 
     // Initialize totals display
-    updateTotals(0, 0);
+    updateTotals(0, 0, 0); // Initialize with total distance
 
     // Add PDF export button event listener
     document.getElementById('exportPdfBtn').addEventListener('click', exportHiresToPDF);
