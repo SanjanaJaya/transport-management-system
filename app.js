@@ -504,6 +504,7 @@ document.addEventListener('click', async (e) => {
     }
 });
 
+
 // Function to generate and copy the public view link
 function generateAndCopyPublicLink(vehicleId, vehicleNumber) {
     // Assuming public-view.html is in the same directory
@@ -822,6 +823,13 @@ function exportHiresToPDF() {
 
                 let finalY = doc.lastAutoTable.finalY + 10;
 
+                // Check if totals would overflow to a new page, and add new page if needed
+                const textHeight = 7 * 4; // Approx height for 4 lines of text
+                if (finalY + textHeight > doc.internal.pageSize.getHeight() - 20) { // 20 for bottom margin
+                    doc.addPage();
+                    finalY = 20; // Start at top of new page
+                }
+
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY); // Add total distance
@@ -833,6 +841,10 @@ function exportHiresToPDF() {
 
                 // Add system generated text at the bottom
                 finalY = finalY + 37; // Further adjust Y to place it below totals
+                if (finalY > doc.internal.pageSize.getHeight() - 20) { // 20 for bottom margin
+                    doc.addPage();
+                    finalY = 20; // Start at top of new page
+                }
                 doc.setFontSize(10);
                 doc.setTextColor(100, 100, 100); // Grey color for this text
                 doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
@@ -939,6 +951,13 @@ function exportHiresToPDF() {
 
                 let finalY = doc.lastAutoTable.finalY + 10;
 
+                // Check if totals would overflow to a new page, and add new page if needed
+                const textHeight = 7 * 4; // Approx height for 4 lines of text
+                if (finalY + textHeight > doc.internal.pageSize.getHeight() - 20) { // 20 for bottom margin
+                    doc.addPage();
+                    finalY = 20; // Start at top of new page
+                }
+
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY); // Add total distance
@@ -950,6 +969,10 @@ function exportHiresToPDF() {
 
                 // Add system generated text at the bottom
                 finalY = finalY + 37; // Further adjust Y to place it below totals
+                if (finalY > doc.internal.pageSize.getHeight() - 20) { // 20 for bottom margin
+                    doc.addPage();
+                    finalY = 20; // Start at top of new page
+                }
                 doc.setFontSize(10);
                 doc.setTextColor(100, 100, 100); // Grey color for this text
                 doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
