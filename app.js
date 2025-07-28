@@ -254,7 +254,6 @@ function loadVehicles() {
                 <td>
                     <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
                     <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
-                    <button class="action-btn view-link-btn" data-id="${doc.id}" data-vehicle-number="${vehicle.vehicleNumber}">View Link</button>
                 </td>
             `;
             vehiclesList.appendChild(tr);
