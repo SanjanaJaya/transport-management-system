@@ -103,14 +103,17 @@ const auth = firebase.auth(); // Initialize Firebase Auth
 const vehiclesTab = document.getElementById('vehiclesTab');
 const driversTab = document.getElementById('driversTab');
 const hiresTab = document.getElementById('hiresTab');
+const advancePaymentsTab = document.getElementById('advancePaymentsTab'); // New Tab
 const vehiclesSection = document.getElementById('vehiclesSection');
 const driversSection = document.getElementById('driversSection');
 const hiresSection = document.getElementById('hiresSection');
+const advancePaymentsSection = document.getElementById('advancePaymentsSection'); // New Section
 
 // Tab Switching
 vehiclesTab.addEventListener('click', () => setActiveTab(vehiclesTab, vehiclesSection));
 driversTab.addEventListener('click', () => setActiveTab(driversTab, driversSection));
 hiresTab.addEventListener('click', () => setActiveTab(hiresTab, hiresSection));
+advancePaymentsTab.addEventListener('click', () => setActiveTab(advancePaymentsTab, advancePaymentsSection)); // New Tab Event
 
 function setActiveTab(tab, section) {
     document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
@@ -136,6 +139,14 @@ document.getElementById('addHireBtn').addEventListener('click', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('hireDate').value = today;
     document.getElementById('addHireModal').style.display = 'block';
+});
+
+// New: Add Advance Payment button event listener
+document.getElementById('addAdvancePaymentBtn').addEventListener('click', () => {
+    document.getElementById('advancePaymentForm').reset();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('advancePaymentDate').value = today;
+    document.getElementById('addAdvancePaymentModal').style.display = 'block';
 });
 
 // Vehicle Management
@@ -232,6 +243,37 @@ hireForm.addEventListener('submit', async (e) => {
     }
 });
 
+// New: Advance Payment Management
+const advancePaymentForm = document.getElementById('advancePaymentForm');
+advancePaymentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        const vehicleId = document.getElementById('advancePaymentVehicle').value;
+        const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
+
+        if (!vehicleDoc.exists) {
+            throw new Error("Selected vehicle not found");
+        }
+
+        const advancePayment = {
+            date: document.getElementById('advancePaymentDate').value,
+            month: document.getElementById('advancePaymentMonth').value,
+            vehicleId: vehicleId,
+            vehicleNumber: vehicleDoc.data().vehicleNumber,
+            amount: parseFloat(document.getElementById('advancePaymentAmount').value),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await db.collection('advancePayments').add(advancePayment);
+        advancePaymentForm.reset();
+        document.getElementById('addAdvancePaymentModal').style.display = 'none';
+        showMessage('Advance payment added successfully!', 'success');
+    } catch (error) {
+        console.error("Error adding advance payment:", error);
+        showMessage("Failed to add advance payment. Please check console for details.", 'error');
+    }
+});
+
+
 // Load Vehicles with real-time updates
 function loadVehicles() {
     db.collection('vehicles').orderBy('createdAt').onSnapshot((snapshot) => {
@@ -301,31 +343,41 @@ function loadDrivers() {
 }
 
 // Load Hires with real-time updates (Fuel fields optional)
-function loadHires() {
-    db.collection('hires').orderBy('createdAt').onSnapshot(async (snapshot) => {
+async function loadHires() {
+    try {
+        const hiresSnapshot = await db.collection('hires').orderBy('createdAt').get();
+        const driversSnapshot = await db.collection('drivers').get();
+        const advancePaymentsSnapshot = await db.collection('advancePayments').get();
+
         const hiresList = document.getElementById('hiresList');
         hiresList.innerHTML = '';
         let totalFuel = 0;
         let totalHire = 0;
-        let totalDistance = 0; // New variable for total distance
+        let totalDistance = 0;
+        let totalAdvancePayments = 0; // New variable for total advance payments
 
-        if (snapshot.empty) {
+        if (hiresSnapshot.empty) {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
-            updateTotals(0, 0, 0); // Update with total distance
+            updateTotals(0, 0, 0, 0);
             return;
         }
 
-        // Get all drivers for display
-        const driversSnapshot = await db.collection('drivers').get();
         const drivers = {};
         driversSnapshot.forEach(doc => {
             drivers[doc.id] = doc.data().name;
         });
 
-        snapshot.forEach(doc => {
+        const advancePaymentsByMonthAndVehicle = {};
+        advancePaymentsSnapshot.forEach(doc => {
+            const ap = doc.data();
+            const key = `${ap.month}-${ap.vehicleId}`;
+            advancePaymentsByMonthAndVehicle[key] = (advancePaymentsByMonthAndVehicle[key] || 0) + ap.amount;
+        });
+
+        hiresSnapshot.forEach(doc => {
             const hire = doc.data();
             totalHire += hire.hireAmount || 0;
-            totalDistance += hire.distance || 0; // Accumulate total distance
+            totalDistance += hire.distance || 0;
 
             if (hire.fuelCost) {
                 totalFuel += hire.fuelCost;
@@ -352,20 +404,69 @@ function loadHires() {
             hiresList.appendChild(tr);
         });
 
-        updateTotals(totalFuel, totalHire, totalDistance); // Pass total distance
-    }, error => {
+        // Calculate total advance payments for currently displayed hires (if not filtered)
+        // If filters are applied, this total will be specific to the filtered data.
+        // For initial load, it sums up all advance payments.
+        advancePaymentsSnapshot.forEach(doc => {
+             totalAdvancePayments += doc.data().amount;
+        });
+
+
+        updateTotals(totalFuel, totalHire, totalDistance, totalAdvancePayments);
+    } catch (error) {
         console.error("Error loading hires:", error);
         document.getElementById('hiresList').innerHTML = '<tr><td colspan="12">Error loading hire records</td></tr>';
-        updateTotals(0, 0, 0); // Pass total distance
+        updateTotals(0, 0, 0, 0);
+    }
+}
+
+// New: Load Advance Payments with real-time updates
+function loadAdvancePayments() {
+    db.collection('advancePayments').orderBy('createdAt').onSnapshot(async (snapshot) => {
+        const advancePaymentsList = document.getElementById('advancePaymentsList');
+        advancePaymentsList.innerHTML = '';
+
+        if (snapshot.empty) {
+            advancePaymentsList.innerHTML = '<tr><td colspan="5">No advance payments found</td></tr>';
+            return;
+        }
+
+        // Fetch vehicle numbers for display
+        const vehiclesSnapshot = await db.collection('vehicles').get();
+        const vehicles = {};
+        vehiclesSnapshot.forEach(doc => {
+            vehicles[doc.id] = doc.data().vehicleNumber;
+        });
+
+        snapshot.forEach(doc => {
+            const ap = doc.data();
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${ap.date}</td>
+                <td>${ap.month}</td>
+                <td>${vehicles[ap.vehicleId] || 'N/A'}</td>
+                <td>${ap.amount.toFixed(2)}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
+                    <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
+                </td>
+            `;
+            advancePaymentsList.appendChild(tr);
+        });
+    }, error => {
+        console.error("Error loading advance payments:", error);
+        document.getElementById('advancePaymentsList').innerHTML = '<tr><td colspan="5">Error loading advance payments</td></tr>';
     });
 }
 
-// Modified updateTotals function to include totalDistance
-function updateTotals(fuelCost, hireAmount, totalDistance) {
+
+// Modified updateTotals function to include totalDistance and totalAdvancePayments
+function updateTotals(fuelCost, hireAmount, totalDistance, totalAdvancePayments) {
     document.getElementById('totalFuelCost').textContent = fuelCost.toFixed(2);
     document.getElementById('totalHireAmount').textContent = hireAmount.toFixed(2);
-    document.getElementById('netProfit').textContent = (hireAmount - fuelCost).toFixed(2);
-    document.getElementById('totalDistance').textContent = totalDistance.toFixed(1); // Update total distance
+    // Calculate net profit after subtracting advance payments
+    document.getElementById('netProfit').textContent = (hireAmount - fuelCost - totalAdvancePayments).toFixed(2);
+    document.getElementById('totalDistance').textContent = totalDistance.toFixed(1);
 }
 
 // Populate vehicle dropdowns
@@ -373,11 +474,14 @@ function populateVehicleDropdowns(vehiclesSnapshot) {
     const dropdowns = [
         document.getElementById('hireVehicle'),
         document.getElementById('editHireVehicle'),
-        document.getElementById('filterVehicle')
+        document.getElementById('filterVehicle'),
+        document.getElementById('advancePaymentVehicle'), // New dropdown
+        document.getElementById('editAdvancePaymentVehicle') // New dropdown
     ];
 
     dropdowns.forEach(dropdown => {
-        while (dropdown.options.length > 1) dropdown.remove(1);
+        // Keep the "Select Vehicle" or "All Vehicles" option
+        while (dropdown.options.length > (dropdown.id === 'filterVehicle' ? 1 : 1)) dropdown.remove(1);
 
         if (!vehiclesSnapshot.empty) {
             vehiclesSnapshot.forEach(doc => {
@@ -425,6 +529,7 @@ document.addEventListener('click', async (e) => {
                 if (table === 'vehiclesTable') collectionName = 'vehicles';
                 else if (table === 'driversTable') collectionName = 'drivers';
                 else if (table === 'hiresTable') collectionName = 'hires';
+                else if (table === 'advancePaymentsTable') collectionName = 'advancePayments'; // New
 
                 if (collectionName) {
                     await db.collection(collectionName).doc(id).delete();
@@ -479,14 +584,32 @@ document.addEventListener('click', async (e) => {
                     document.getElementById('editFuelLiters').value = hire.fuelLiters || '';
                     document.getElementById('editFuelPricePerLiter').value = hire.fuelPricePerLiter || '';
 
+                    // Use setTimeout to ensure options are populated before setting value
                     setTimeout(() => {
                         document.getElementById('editHireVehicle').value = hire.vehicleId;
                         if (hire.driverId) {
                             document.getElementById('editHireDriver').value = hire.driverId;
                         }
-                    }, 100);
+                    }, 100); // Small delay
+
 
                     document.getElementById('editHireModal').style.display = 'block';
+                }
+            }
+            else if (table === 'advancePaymentsTable') { // New: Edit Advance Payment
+                const doc = await db.collection('advancePayments').doc(id).get();
+                if (doc.exists) {
+                    const ap = doc.data();
+                    document.getElementById('editAdvancePaymentId').value = id;
+                    document.getElementById('editAdvancePaymentDate').value = ap.date;
+                    document.getElementById('editAdvancePaymentMonth').value = ap.month;
+                    document.getElementById('editAdvancePaymentAmount').value = ap.amount;
+
+                    setTimeout(() => {
+                        document.getElementById('editAdvancePaymentVehicle').value = ap.vehicleId;
+                    }, 100);
+
+                    document.getElementById('editAdvancePaymentModal').style.display = 'block';
                 }
             }
         } catch (error) {
@@ -494,31 +617,7 @@ document.addEventListener('click', async (e) => {
             showMessage("Failed to load record for editing. Please check console for details.", 'error');
         }
     }
-
-    // New: Handle "View Link" button click
-    if (e.target.classList.contains('view-link-btn')) {
-        const vehicleId = e.target.getAttribute('data-id');
-        const vehicleNumber = e.target.getAttribute('data-vehicle-number');
-        generateAndCopyPublicLink(vehicleId, vehicleNumber);
-    }
 });
-
-
-// Function to generate and copy the public view link
-function generateAndCopyPublicLink(vehicleId, vehicleNumber) {
-    // Assuming public-view.html is in the same directory
-    const publicViewUrl = `${window.location.origin}/public-view.html?vehicleId=${vehicleId}`;
-
-    // Create a temporary input element to copy the text
-    const tempInput = document.createElement('input');
-    tempInput.value = publicViewUrl;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    document.execCommand('copy');
-    document.body.removeChild(tempInput);
-
-    showMessage(`Public view link for ${vehicleNumber} copied to clipboard!`, 'success');
-}
 
 
 // Edit form submissions
@@ -619,6 +718,36 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
     }
 });
 
+// New: Edit Advance Payment form submission
+document.getElementById('editAdvancePaymentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        const id = document.getElementById('editAdvancePaymentId').value;
+        const vehicleId = document.getElementById('editAdvancePaymentVehicle').value;
+        const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
+
+        if (!vehicleDoc.exists) {
+            throw new Error("Selected vehicle not found");
+        }
+
+        const updates = {
+            date: document.getElementById('editAdvancePaymentDate').value,
+            month: document.getElementById('editAdvancePaymentMonth').value,
+            vehicleId: vehicleId,
+            vehicleNumber: vehicleDoc.data().vehicleNumber,
+            amount: parseFloat(document.getElementById('editAdvancePaymentAmount').value),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await db.collection('advancePayments').doc(id).update(updates);
+        document.getElementById('editAdvancePaymentModal').style.display = 'none';
+        showMessage('Advance payment updated successfully!', 'success');
+    } catch (error) {
+        console.error("Error updating advance payment:", error);
+        showMessage("Failed to update advance payment. Please check console for details.", 'error');
+    }
+});
+
+
 // Filter functionality - Fixed version
 document.getElementById('applyFilter').addEventListener('click', async () => {
     try {
@@ -627,44 +756,53 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
 
         let query = db.collection('hires');
 
-        // Apply month filter if not 'All'
         if (month !== 'All') {
             query = query.where('month', '==', month);
         }
-
-        // Apply vehicle filter if not 'All'
         if (vehicle !== 'All') {
             query = query.where('vehicleId', '==', vehicle);
         }
 
-        // Add ordering
         query = query.orderBy('createdAt');
 
-        const snapshot = await query.get();
+        const hiresSnapshot = await query.get();
         const hiresList = document.getElementById('hiresList');
         hiresList.innerHTML = '';
         let totalFuel = 0;
         let totalHire = 0;
-        let totalDistance = 0; // New variable for total distance
+        let totalDistance = 0;
+        let totalAdvancePayments = 0; // Initialize total advance payments for filtered data
 
-        if (snapshot.empty) {
+        if (hiresSnapshot.empty) {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found for selected filter</td></tr>';
-            updateTotals(0, 0, 0); // Update with total distance
+            updateTotals(0, 0, 0, 0);
             return;
         }
 
-        // Get all drivers for display
         const driversSnapshot = await db.collection('drivers').get();
         const drivers = {};
         driversSnapshot.forEach(doc => {
             drivers[doc.id] = doc.data().name;
         });
 
-        // Process each hire record
-        snapshot.forEach(doc => {
+        // Fetch advance payments that match the applied filters
+        let advancePaymentsQuery = db.collection('advancePayments');
+        if (month !== 'All') {
+            advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
+        }
+        if (vehicle !== 'All') {
+            advancePaymentsQuery = advancePaymentsQuery.where('vehicleId', '==', vehicle);
+        }
+        const advancePaymentsSnapshot = await advancePaymentsQuery.get();
+
+        advancePaymentsSnapshot.forEach(doc => {
+            totalAdvancePayments += doc.data().amount;
+        });
+
+        hiresSnapshot.forEach(doc => {
             const hire = doc.data();
             totalHire += hire.hireAmount || 0;
-            totalDistance += hire.distance || 0; // Accumulate total distance
+            totalDistance += hire.distance || 0;
 
             if (hire.fuelCost) {
                 totalFuel += hire.fuelCost;
@@ -691,11 +829,11 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
             hiresList.appendChild(tr);
         });
 
-        updateTotals(totalFuel, totalHire, totalDistance); // Pass total distance
+        updateTotals(totalFuel, totalHire, totalDistance, totalAdvancePayments);
     } catch (error) {
         console.error("Error filtering hires:", error);
         document.getElementById('hiresList').innerHTML = '<tr><td colspan="12">Error filtering hire records</td></tr>';
-        updateTotals(0, 0, 0); // Pass total distance
+        updateTotals(0, 0, 0, 0);
         showMessage("Error filtering records. Please check console for details.", 'error');
     }
 });
@@ -706,11 +844,9 @@ function exportHiresToPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        // Get filter values
         const month = document.getElementById('filterMonth').value;
         const vehicleId = document.getElementById('filterVehicle').value;
 
-        // Get vehicle name if filtered
         let vehicleName = "All Vehicles";
         if (vehicleId !== "All") {
             const vehicleSelect = document.getElementById('filterVehicle');
@@ -718,38 +854,31 @@ function exportHiresToPDF() {
             vehicleName = selectedOption.text;
         }
 
-        // Add logo
         const logoUrl = 'https://i.postimg.cc/ncLHmYyk/PDF-logo.png';
 
-        // Add logo to PDF (this will be loaded asynchronously)
         const img = new Image();
         img.src = logoUrl;
-        img.onload = function() {
-            // Calculate center position for the logo
-            const imgWidth = 30; // Original width of the logo
-            const imgHeight = 30; // Original height of the logo
+        img.onload = async function() { // Made onload async to await advance payments
+            const imgWidth = 30;
+            const imgHeight = 30;
             const pageWidth = doc.internal.pageSize.getWidth();
             const x = (pageWidth - imgWidth) / 2;
             doc.addImage(img, 'PNG', x, 10, imgWidth, imgHeight);
 
-            // Add header text
             doc.setFontSize(20);
-            doc.setTextColor(231, 76, 60); // Red color
-            doc.text('JAYASOORIYA ENTERPRISES', pageWidth / 2, 50, { align: 'center' }); // Adjusted Y position
+            doc.setTextColor(231, 76, 60);
+            doc.text('JAYASOORIYA ENTERPRISES', pageWidth / 2, 50, { align: 'center' });
             doc.setFontSize(14);
-            doc.setTextColor(0, 0, 0); // Black color
-            doc.text('Vehicle Hire Report', pageWidth / 2, 60, { align: 'center' }); // Adjusted Y position
+            doc.setTextColor(0, 0, 0);
+            doc.text('Vehicle Hire Report', pageWidth / 2, 60, { align: 'center' });
 
-            // Add filter info
             doc.setFontSize(12);
             doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 70);
             doc.text(`Vehicle: ${vehicleName}`, 15, 77);
 
-            // Add current date
             const today = new Date();
             doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 84);
 
-            // Get table data
             const hiresTable = document.getElementById('hiresTable');
             const rows = hiresTable.querySelectorAll('tbody tr');
 
@@ -757,127 +886,115 @@ function exportHiresToPDF() {
                 doc.setFontSize(12);
                 doc.text('No hire records found for selected filter', 15, 100);
             } else {
-                // Prepare data for the table
                 const tableData = [];
                 tableData.push([
-                    'Date',
-                    'Vehicle',
-                    'From',
-                    'To',
-                    'Distance',
-                    'Fuel (L)',
-                    'Fuel Price/L',
-                    'Fuel Cost',
-                    'Price/KM',
-                    'Hire Amount',
-                    'Driver'
+                    'Date', 'Vehicle', 'From', 'To', 'Distance',
+                    'Fuel (L)', 'Fuel Price/L', 'Fuel Cost', 'Price/KM',
+                    'Hire Amount', 'Driver'
                 ]);
 
                 rows.forEach(row => {
                     const cells = row.querySelectorAll('td');
                     const rowData = [];
-                    for (let i = 0; i < cells.length - 1; i++) { // Skip last cell (actions)
+                    for (let i = 0; i < cells.length - 1; i++) {
                         rowData.push(cells[i].textContent.trim());
                     }
                     tableData.push(rowData);
                 });
 
-                // Add the table
                 doc.autoTable({
-                    startY: 95, // Adjusted startY to accommodate new header
+                    startY: 95,
                     head: [tableData[0]],
                     body: tableData.slice(1),
                     theme: 'grid',
                     headStyles: {
-                        fillColor: [231, 76, 60], // Red header
-                        textColor: [255, 255, 255] // White text
+                        fillColor: [231, 76, 60],
+                        textColor: [255, 255, 255]
                     },
                     alternateRowStyles: {
-                        fillColor: [245, 245, 245] // Light gray for alternate rows
+                        fillColor: [245, 245, 245]
                     },
                     styles: {
                         fontSize: 8,
                         cellPadding: 3
                     },
                     columnStyles: {
-                        0: { cellWidth: 15 },
-                        1: { cellWidth: 20 },
-                        2: { cellWidth: 20 },
-                        3: { cellWidth: 20 },
-                        4: { cellWidth: 15 },
-                        5: { cellWidth: 12 },
-                        6: { cellWidth: 15 },
-                        7: { cellWidth: 15 },
-                        8: { cellWidth: 15 },
-                        9: { cellWidth: 20 },
-                        10: { cellWidth: 25 }
+                        0: { cellWidth: 15 }, 1: { cellWidth: 20 }, 2: { cellWidth: 20 },
+                        3: { cellWidth: 20 }, 4: { cellWidth: 15 }, 5: { cellWidth: 12 },
+                        6: { cellWidth: 15 }, 7: { cellWidth: 15 }, 8: { cellWidth: 15 },
+                        9: { cellWidth: 20 }, 10: { cellWidth: 25 }
                     }
                 });
 
-                // Add totals
                 const totalFuel = document.getElementById('totalFuelCost').textContent;
                 const totalHire = document.getElementById('totalHireAmount').textContent;
                 const netProfit = document.getElementById('netProfit').textContent;
-                const totalDistance = document.getElementById('totalDistance').textContent; // Get total distance
+                const totalDistance = document.getElementById('totalDistance').textContent;
+
+                // Fetch and sum advance payments for the filtered criteria
+                let advancePaymentsQuery = db.collection('advancePayments');
+                if (month !== 'All') {
+                    advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
+                }
+                if (vehicleId !== 'All') {
+                    advancePaymentsQuery = advancePaymentsQuery.where('vehicleId', '==', vehicleId);
+                }
+                const advancePaymentsSnapshot = await advancePaymentsQuery.get();
+                let filteredAdvancePaymentsTotal = 0;
+                advancePaymentsSnapshot.forEach(doc => {
+                    filteredAdvancePaymentsTotal += doc.data().amount;
+                });
 
                 let finalY = doc.lastAutoTable.finalY + 10;
 
-                // Check if totals would overflow to a new page, and add new page if needed
-                const textHeight = 7 * 4; // Approx height for 4 lines of text
-                if (finalY + textHeight > doc.internal.pageSize.getHeight() - 20) { // 20 for bottom margin
+                const textHeight = 7 * 5; // Approx height for 5 lines of text (including advance)
+                if (finalY + textHeight > doc.internal.pageSize.getHeight() - 20) {
                     doc.addPage();
-                    finalY = 20; // Start at top of new page
+                    finalY = 20;
                 }
 
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
-                doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY); // Add total distance
+                doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY);
                 doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY + 7);
-                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 14); // Adjusted Y
+                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 14);
+                doc.text(`Total Advance Payments: LKR ${filteredAdvancePaymentsTotal.toFixed(2)}`, 15, finalY + 21); // Display advance
                 doc.setFontSize(12);
                 doc.setTextColor(231, 76, 60);
-                doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 24); // Adjusted Y
+                doc.text(`Net Profit (After Advances): LKR ${netProfit}`, 15, finalY + 31); // Adjusted Y
 
-                // Add system generated text at the bottom
-                finalY = finalY + 37; // Further adjust Y to place it below totals
-                if (finalY > doc.internal.pageSize.getHeight() - 20) { // 20 for bottom margin
+                finalY = finalY + 44;
+                if (finalY > doc.internal.pageSize.getHeight() - 20) {
                     doc.addPage();
-                    finalY = 20; // Start at top of new page
+                    finalY = 20;
                 }
                 doc.setFontSize(10);
-                doc.setTextColor(100, 100, 100); // Grey color for this text
+                doc.setTextColor(100, 100, 100);
                 doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
             }
 
-            // Save the PDF
             doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
-
             showMessage('PDF exported successfully!', 'success');
         };
 
-        img.onerror = function() {
-            // If logo fails to load, proceed without it
+        img.onerror = async function() { // Made onerror async too
             console.warn("Logo failed to load, generating PDF without it");
 
-            // Add header text
             const pageWidth = doc.internal.pageSize.getWidth();
             doc.setFontSize(20);
-            doc.setTextColor(231, 76, 60); // Red color
+            doc.setTextColor(231, 76, 60);
             doc.text('JAYASOORIYA ENTERPRISES', pageWidth / 2, 20, { align: 'center' });
             doc.setFontSize(14);
-            doc.setTextColor(0, 0, 0); // Black color
+            doc.setTextColor(0, 0, 0);
             doc.text('Vehicle Hire Report', pageWidth / 2, 30, { align: 'center' });
 
-            // Add filter info
             doc.setFontSize(12);
             doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 40);
             doc.text(`Vehicle: ${vehicleName}`, 15, 47);
 
-            // Add current date
             const today = new Date();
             doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 54);
 
-            // Get table data
             const hiresTable = document.getElementById('hiresTable');
             const rows = hiresTable.querySelectorAll('tbody tr');
 
@@ -885,101 +1002,94 @@ function exportHiresToPDF() {
                 doc.setFontSize(12);
                 doc.text('No hire records found for selected filter', 15, 70);
             } else {
-                // Prepare data for the table
                 const tableData = [];
                 tableData.push([
-                    'Date',
-                    'Vehicle',
-                    'From',
-                    'To',
-                    'Distance',
-                    'Fuel (L)',
-                    'Fuel Price/L',
-                    'Fuel Cost',
-                    'Price/KM',
-                    'Hire Amount',
-                    'Driver'
+                    'Date', 'Vehicle', 'From', 'To', 'Distance',
+                    'Fuel (L)', 'Fuel Price/L', 'Fuel Cost', 'Price/KM',
+                    'Hire Amount', 'Driver'
                 ]);
 
                 rows.forEach(row => {
                     const cells = row.querySelectorAll('td');
                     const rowData = [];
-                    for (let i = 0; i < cells.length - 1; i++) { // Skip last cell (actions)
+                    for (let i = 0; i < cells.length - 1; i++) {
                         rowData.push(cells[i].textContent.trim());
                     }
                     tableData.push(rowData);
                 });
 
-                // Add the table
                 doc.autoTable({
                     startY: 70,
                     head: [tableData[0]],
                     body: tableData.slice(1),
                     theme: 'grid',
                     headStyles: {
-                        fillColor: [231, 76, 60], // Red header
-                        textColor: [255, 255, 255] // White text
+                        fillColor: [231, 76, 60],
+                        textColor: [255, 255, 255]
                     },
                     alternateRowStyles: {
-                        fillColor: [245, 245, 245] // Light gray for alternate rows
+                        fillColor: [245, 245, 245]
                     },
                     styles: {
                         fontSize: 8,
                         cellPadding: 3
                     },
                     columnStyles: {
-                        0: { cellWidth: 15 },
-                        1: { cellWidth: 20 },
-                        2: { cellWidth: 20 },
-                        3: { cellWidth: 20 },
-                        4: { cellWidth: 15 },
-                        5: { cellWidth: 12 },
-                        6: { cellWidth: 15 },
-                        7: { cellWidth: 15 },
-                        8: { cellWidth: 15 },
-                        9: { cellWidth: 20 },
-                        10: { cellWidth: 25 }
+                        0: { cellWidth: 15 }, 1: { cellWidth: 20 }, 2: { cellWidth: 20 },
+                        3: { cellWidth: 20 }, 4: { cellWidth: 15 }, 5: { cellWidth: 12 },
+                        6: { cellWidth: 15 }, 7: { cellWidth: 15 }, 8: { cellWidth: 15 },
+                        9: { cellWidth: 20 }, 10: { cellWidth: 25 }
                     }
                 });
 
-                // Add totals
                 const totalFuel = document.getElementById('totalFuelCost').textContent;
                 const totalHire = document.getElementById('totalHireAmount').textContent;
                 const netProfit = document.getElementById('netProfit').textContent;
-                const totalDistance = document.getElementById('totalDistance').textContent; // Get total distance
+                const totalDistance = document.getElementById('totalDistance').textContent;
+
+                // Fetch and sum advance payments for the filtered criteria (again, in case of error with logo)
+                let advancePaymentsQuery = db.collection('advancePayments');
+                if (month !== 'All') {
+                    advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
+                }
+                if (vehicleId !== 'All') {
+                    advancePaymentsQuery = advancePaymentsQuery.where('vehicleId', '==', vehicleId);
+                }
+                const advancePaymentsSnapshot = await advancePaymentsQuery.get();
+                let filteredAdvancePaymentsTotal = 0;
+                advancePaymentsSnapshot.forEach(doc => {
+                    filteredAdvancePaymentsTotal += doc.data().amount;
+                });
 
                 let finalY = doc.lastAutoTable.finalY + 10;
 
-                // Check if totals would overflow to a new page, and add new page if needed
-                const textHeight = 7 * 4; // Approx height for 4 lines of text
-                if (finalY + textHeight > doc.internal.pageSize.getHeight() - 20) { // 20 for bottom margin
+                const textHeight = 7 * 5;
+                if (finalY + textHeight > doc.internal.pageSize.getHeight() - 20) {
                     doc.addPage();
-                    finalY = 20; // Start at top of new page
+                    finalY = 20;
                 }
 
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
-                doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY); // Add total distance
+                doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY);
                 doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY + 7);
-                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 14); // Adjusted Y
+                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 14);
+                doc.text(`Total Advance Payments: LKR ${filteredAdvancePaymentsTotal.toFixed(2)}`, 15, finalY + 21);
                 doc.setFontSize(12);
                 doc.setTextColor(231, 76, 60);
-                doc.text(`Net Profit: LKR ${netProfit}`, 15, finalY + 24); // Adjusted Y
+                doc.text(`Net Profit (After Advances): LKR ${netProfit}`, 15, finalY + 31);
 
-                // Add system generated text at the bottom
-                finalY = finalY + 37; // Further adjust Y to place it below totals
-                if (finalY > doc.internal.pageSize.getHeight() - 20) { // 20 for bottom margin
+                finalY = finalY + 44;
+                if (finalY > doc.internal.pageSize.getHeight() - 20) {
                     doc.addPage();
-                    finalY = 20; // Start at top of new page
+                    finalY = 20;
                 }
                 doc.setFontSize(10);
-                doc.setTextColor(100, 100, 100); // Grey color for this text
+                doc.setTextColor(100, 100, 100);
                 doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
             }
 
-            // Save the PDF
             doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
-
             showMessage('PDF exported successfully!', 'success');
         };
     } catch (error) {
@@ -987,6 +1097,7 @@ function exportHiresToPDF() {
         showMessage("Failed to generate PDF. Please check console for details.", 'error');
     }
 }
+
 
 // Custom message box and confirmation dialog
 function showMessage(message, type) {
@@ -1082,9 +1193,10 @@ function initApp() {
     loadVehicles();
     loadDrivers();
     loadHires();
+    loadAdvancePayments(); // New: Load advance payments
 
     // Initialize totals display
-    updateTotals(0, 0, 0); // Initialize with total distance
+    updateTotals(0, 0, 0, 0); // Initialize with total distance and advance payments
 
     // Add PDF export button event listener
     document.getElementById('exportPdfBtn').addEventListener('click', exportHiresToPDF);
