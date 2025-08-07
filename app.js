@@ -902,7 +902,7 @@ function exportHiresToPDF() {
             vehicleName = selectedOption.text;
         }
 
-        const logoUrl = 'https://i.postimg.cc/x19FXbdR/New-Transport-Logo.png';
+        const logoUrl = 'https://i.postimg.cc/jSbPKGXw/PDF-logo.png';
 
         const img = new Image();
         img.src = logoUrl;
