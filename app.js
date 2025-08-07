@@ -104,16 +104,22 @@ const vehiclesTab = document.getElementById('vehiclesTab');
 const driversTab = document.getElementById('driversTab');
 const hiresTab = document.getElementById('hiresTab');
 const advancePaymentsTab = document.getElementById('advancePaymentsTab');
+const lettersTab = document.getElementById('lettersTab');
 const vehiclesSection = document.getElementById('vehiclesSection');
 const driversSection = document.getElementById('driversSection');
 const hiresSection = document.getElementById('hiresSection');
 const advancePaymentsSection = document.getElementById('advancePaymentsSection');
+const lettersSection = document.getElementById('lettersSection');
+const addLetterBtn = document.getElementById('addLetterBtn');
+const letterForm = document.getElementById('letterForm');
+const saveLetterBtn = document.getElementById('saveLetterBtn');
 
 // Tab Switching
 vehiclesTab.addEventListener('click', () => setActiveTab(vehiclesTab, vehiclesSection));
 driversTab.addEventListener('click', () => setActiveTab(driversTab, driversSection));
 hiresTab.addEventListener('click', () => setActiveTab(hiresTab, hiresSection));
 advancePaymentsTab.addEventListener('click', () => setActiveTab(advancePaymentsTab, advancePaymentsSection));
+lettersTab.addEventListener('click', () => setActiveTab(lettersTab, lettersSection));
 
 function setActiveTab(tab, section) {
     document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
@@ -145,6 +151,13 @@ document.getElementById('addAdvancePaymentBtn').addEventListener('click', () => 
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('advancePaymentDate').value = today;
     document.getElementById('addAdvancePaymentModal').style.display = 'block';
+});
+
+addLetterBtn.addEventListener('click', () => {
+    document.getElementById('letterForm').reset();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('letterDate').value = today;
+    document.getElementById('addLetterModal').style.display = 'block';
 });
 
 // Vehicle Management
@@ -300,6 +313,237 @@ advancePaymentForm.addEventListener('submit', async (e) => {
         showMessage("Failed to add advance payment. Please check console for details.", 'error');
     }
 });
+
+// Letter Management
+letterForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    generateLetterPDF();
+});
+
+saveLetterBtn.addEventListener('click', async () => {
+    try {
+        const letter = {
+            date: document.getElementById('letterDate').value,
+            refNo: document.getElementById('letterRefNo').value,
+            recipient: document.getElementById('letterRecipient').value,
+            recipientAddress: document.getElementById('letterRecipientAddress').value,
+            subject: document.getElementById('letterSubject').value,
+            salutation: document.getElementById('letterSalutation').value,
+            body: document.getElementById('letterBody').value,
+            closing: document.getElementById('letterClosing').value,
+            senderName: document.getElementById('letterSenderName').value,
+            senderPosition: document.getElementById('letterSenderPosition').value,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await db.collection('letters').add(letter);
+        showMessage('Letter draft saved successfully!', 'success');
+        loadLetters();
+    } catch (error) {
+        console.error("Error saving letter:", error);
+        showMessage("Failed to save letter draft. Please check console for details.", 'error');
+    }
+});
+
+function generateLetterPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Set margins
+        const marginLeft = 20;
+        const marginRight = 20;
+        const marginTop = 30;
+        let yPos = marginTop;
+        
+        // Add logo
+        const logoUrl = 'https://i.postimg.cc/x19FXbdR/New-Transport-Logo.png';
+        const img = new Image();
+        img.src = logoUrl;
+        
+        img.onload = function() {
+            doc.addImage(img, 'PNG', marginLeft, yPos, 30, 30);
+            yPos += 40;
+            
+            // Company address
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Jayasooriya Transport', marginLeft, yPos);
+            yPos += 5;
+            doc.text('No. 123, Main Street', marginLeft, yPos);
+            yPos += 5;
+            doc.text('Colombo, Sri Lanka', marginLeft, yPos);
+            yPos += 5;
+            doc.text('Tel: +94 11 2345678', marginLeft, yPos);
+            yPos += 5;
+            doc.text('Email: info@jayasooriyatransport.com', marginLeft, yPos);
+            yPos += 15;
+            
+            // Date and reference
+            const letterDate = document.getElementById('letterDate').value;
+            const formattedDate = new Date(letterDate).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.text(`Date: ${formattedDate}`, doc.internal.pageSize.getWidth() - marginRight - 30, yPos, { align: 'right' });
+            yPos += 5;
+            
+            const refNo = document.getElementById('letterRefNo').value;
+            if (refNo) {
+                doc.text(`Ref: ${refNo}`, doc.internal.pageSize.getWidth() - marginRight - 30, yPos, { align: 'right' });
+                yPos += 5;
+            }
+            
+            yPos += 10;
+            
+            // Recipient details
+            doc.setFontSize(10);
+            doc.text(`To: ${document.getElementById('letterRecipient').value}`, marginLeft, yPos);
+            yPos += 5;
+            
+            const recipientAddress = document.getElementById('letterRecipientAddress').value;
+            if (recipientAddress) {
+                const addressLines = doc.splitTextToSize(recipientAddress, doc.internal.pageSize.getWidth() - marginLeft - marginRight);
+                doc.text(addressLines, marginLeft + 10, yPos);
+                yPos += addressLines.length * 5 + 5;
+            } else {
+                yPos += 5;
+            }
+            
+            // Subject
+            doc.setFontSize(12);
+            doc.setTextColor(231, 76, 60); // Red color
+            doc.text(`Subject: ${document.getElementById('letterSubject').value}`, marginLeft, yPos);
+            yPos += 10;
+            
+            // Salutation
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text(document.getElementById('letterSalutation').value, marginLeft, yPos);
+            yPos += 10;
+            
+            // Body
+            const bodyText = document.getElementById('letterBody').value;
+            const bodyLines = doc.splitTextToSize(bodyText, doc.internal.pageSize.getWidth() - marginLeft - marginRight);
+            doc.text(bodyLines, marginLeft, yPos);
+            yPos += bodyLines.length * 6 + 10;
+            
+            // Closing
+            doc.text(document.getElementById('letterClosing').value, marginLeft, yPos);
+            yPos += 15;
+            
+            // Sender details
+            doc.text(document.getElementById('letterSenderName').value, marginLeft, yPos);
+            yPos += 5;
+            doc.text(document.getElementById('letterSenderPosition').value, marginLeft, yPos);
+            
+            // Footer
+            yPos = doc.internal.pageSize.getHeight() - 20;
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Jayasooriya Transport - Transport Management System', doc.internal.pageSize.getWidth() / 2, yPos, { align: 'center' });
+            
+            // Save the PDF
+            const subject = document.getElementById('letterSubject').value;
+            const fileName = `Letter_${subject.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+            doc.save(fileName);
+            showMessage('Letter PDF generated successfully!', 'success');
+        };
+        
+        img.onerror = function() {
+            // Fallback if logo fails to load
+            doc.setFontSize(16);
+            doc.setTextColor(231, 76, 60);
+            doc.text('JAYASOORIYA TRANSPORT', doc.internal.pageSize.getWidth() / 2, marginTop, { align: 'center' });
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text('No. 123, Main Street, Colombo, Sri Lanka | Tel: +94 11 2345678', doc.internal.pageSize.getWidth() / 2, marginTop + 10, { align: 'center' });
+            
+            yPos = marginTop + 25;
+            
+            // Date and reference
+            const letterDate = document.getElementById('letterDate').value;
+            const formattedDate = new Date(letterDate).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.text(`Date: ${formattedDate}`, doc.internal.pageSize.getWidth() - marginRight - 30, yPos, { align: 'right' });
+            yPos += 5;
+            
+            const refNo = document.getElementById('letterRefNo').value;
+            if (refNo) {
+                doc.text(`Ref: ${refNo}`, doc.internal.pageSize.getWidth() - marginRight - 30, yPos, { align: 'right' });
+                yPos += 5;
+            }
+            
+            yPos += 10;
+            
+            // Recipient details
+            doc.setFontSize(10);
+            doc.text(`To: ${document.getElementById('letterRecipient').value}`, marginLeft, yPos);
+            yPos += 5;
+            
+            const recipientAddress = document.getElementById('letterRecipientAddress').value;
+            if (recipientAddress) {
+                const addressLines = doc.splitTextToSize(recipientAddress, doc.internal.pageSize.getWidth() - marginLeft - marginRight);
+                doc.text(addressLines, marginLeft + 10, yPos);
+                yPos += addressLines.length * 5 + 5;
+            } else {
+                yPos += 5;
+            }
+            
+            // Subject
+            doc.setFontSize(12);
+            doc.setTextColor(231, 76, 60); // Red color
+            doc.text(`Subject: ${document.getElementById('letterSubject').value}`, marginLeft, yPos);
+            yPos += 10;
+            
+            // Salutation
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text(document.getElementById('letterSalutation').value, marginLeft, yPos);
+            yPos += 10;
+            
+            // Body
+            const bodyText = document.getElementById('letterBody').value;
+            const bodyLines = doc.splitTextToSize(bodyText, doc.internal.pageSize.getWidth() - marginLeft - marginRight);
+            doc.text(bodyLines, marginLeft, yPos);
+            yPos += bodyLines.length * 6 + 10;
+            
+            // Closing
+            doc.text(document.getElementById('letterClosing').value, marginLeft, yPos);
+            yPos += 15;
+            
+            // Sender details
+            doc.text(document.getElementById('letterSenderName').value, marginLeft, yPos);
+            yPos += 5;
+            doc.text(document.getElementById('letterSenderPosition').value, marginLeft, yPos);
+            
+            // Footer
+            yPos = doc.internal.pageSize.getHeight() - 20;
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Jayasooriya Transport - Transport Management System', doc.internal.pageSize.getWidth() / 2, yPos, { align: 'center' });
+            
+            // Save the PDF
+            const subject = document.getElementById('letterSubject').value;
+            const fileName = `Letter_${subject.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+            doc.save(fileName);
+            showMessage('Letter PDF generated successfully!', 'success');
+        };
+    } catch (error) {
+        console.error("Error generating letter PDF:", error);
+        showMessage("Failed to generate letter PDF. Please check console for details.", 'error');
+    }
+}
 
 // Load Vehicles with real-time updates
 function loadVehicles() {
@@ -484,6 +728,38 @@ function loadAdvancePayments() {
     });
 }
 
+// Load Letters with real-time updates
+function loadLetters() {
+    db.collection('letters').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+        const lettersList = document.getElementById('lettersList');
+        lettersList.innerHTML = '';
+
+        if (snapshot.empty) {
+            lettersList.innerHTML = '<tr><td colspan="4">No letters found</td></tr>';
+            return;
+        }
+
+        snapshot.forEach(doc => {
+            const letter = doc.data();
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${letter.date}</td>
+                <td>${letter.subject}</td>
+                <td>${letter.recipient}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
+                    <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
+                    <button class="action-btn pdf-btn" data-id="${doc.id}">PDF</button>
+                </td>
+            `;
+            lettersList.appendChild(tr);
+        });
+    }, error => {
+        console.error("Error loading letters:", error);
+        document.getElementById('lettersList').innerHTML = '<tr><td colspan="4">Error loading letters</td></tr>';
+    });
+}
+
 // Update totals display
 function updateTotals(fuelCost, hireAmount, totalDistance, totalAdvancePayments) {
     document.getElementById('totalFuelCost').textContent = fuelCost.toFixed(2);
@@ -552,6 +828,7 @@ document.addEventListener('click', async (e) => {
                 else if (table === 'driversTable') collectionName = 'drivers';
                 else if (table === 'hiresTable') collectionName = 'hires';
                 else if (table === 'advancePaymentsTable') collectionName = 'advancePayments';
+                else if (table === 'lettersTable') collectionName = 'letters';
 
                 if (collectionName) {
                     await db.collection(collectionName).doc(id).delete();
@@ -640,6 +917,29 @@ document.addEventListener('click', async (e) => {
         } catch (error) {
             console.error("Error loading document for editing:", error);
             showMessage("Failed to load record for editing. Please check console for details.", 'error');
+        }
+    }
+
+    if (e.target.classList.contains('pdf-btn')) {
+        const id = e.target.getAttribute('data-id');
+        const docRef = await db.collection('letters').doc(id).get();
+        if (docRef.exists) {
+            const letter = docRef.data();
+            
+            // Populate the form with the letter data
+            document.getElementById('letterDate').value = letter.date;
+            document.getElementById('letterRefNo').value = letter.refNo || '';
+            document.getElementById('letterRecipient').value = letter.recipient;
+            document.getElementById('letterRecipientAddress').value = letter.recipientAddress || '';
+            document.getElementById('letterSubject').value = letter.subject;
+            document.getElementById('letterSalutation').value = letter.salutation;
+            document.getElementById('letterBody').value = letter.body;
+            document.getElementById('letterClosing').value = letter.closing;
+            document.getElementById('letterSenderName').value = letter.senderName;
+            document.getElementById('letterSenderPosition').value = letter.senderPosition;
+            
+            // Generate the PDF
+            generateLetterPDF();
         }
     }
 });
@@ -1239,6 +1539,7 @@ function initApp() {
     loadDrivers();
     loadHires();
     loadAdvancePayments();
+    loadLetters();
 
     // Initialize totals display
     updateTotals(0, 0, 0, 0);
