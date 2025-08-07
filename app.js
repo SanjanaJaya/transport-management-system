@@ -97,23 +97,23 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth(); // Initialize Firebase Auth
+const auth = firebase.auth();
 
 // DOM Elements
 const vehiclesTab = document.getElementById('vehiclesTab');
 const driversTab = document.getElementById('driversTab');
 const hiresTab = document.getElementById('hiresTab');
-const advancePaymentsTab = document.getElementById('advancePaymentsTab'); // New Tab
+const advancePaymentsTab = document.getElementById('advancePaymentsTab');
 const vehiclesSection = document.getElementById('vehiclesSection');
 const driversSection = document.getElementById('driversSection');
 const hiresSection = document.getElementById('hiresSection');
-const advancePaymentsSection = document.getElementById('advancePaymentsSection'); // New Section
+const advancePaymentsSection = document.getElementById('advancePaymentsSection');
 
 // Tab Switching
 vehiclesTab.addEventListener('click', () => setActiveTab(vehiclesTab, vehiclesSection));
 driversTab.addEventListener('click', () => setActiveTab(driversTab, driversSection));
 hiresTab.addEventListener('click', () => setActiveTab(hiresTab, hiresSection));
-advancePaymentsTab.addEventListener('click', () => setActiveTab(advancePaymentsTab, advancePaymentsSection)); // New Tab Event
+advancePaymentsTab.addEventListener('click', () => setActiveTab(advancePaymentsTab, advancePaymentsSection));
 
 function setActiveTab(tab, section) {
     document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
@@ -135,13 +135,11 @@ document.getElementById('addDriverBtn').addEventListener('click', () => {
 
 document.getElementById('addHireBtn').addEventListener('click', () => {
     document.getElementById('hireForm').reset();
-    // Set current date as default
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('hireDate').value = today;
     document.getElementById('addHireModal').style.display = 'block';
 });
 
-// New: Add Advance Payment button event listener
 document.getElementById('addAdvancePaymentBtn').addEventListener('click', () => {
     document.getElementById('advancePaymentForm').reset();
     const today = new Date().toISOString().split('T')[0];
@@ -156,8 +154,13 @@ vehicleForm.addEventListener('submit', async (e) => {
     try {
         const vehicle = {
             vehicleNumber: document.getElementById('vehicleNumber').value,
-            vehicleSize: document.getElementById('vehicleSize').value,
-            perKmPrice: parseFloat(document.getElementById('perKmPrice').value),
+            vehicleSize: parseFloat(document.getElementById('vehicleSize').value),
+            minimumHire: parseFloat(document.getElementById('minimumHire').value),
+            tier1Distance: parseFloat(document.getElementById('tier1Distance').value),
+            tier1Price: parseFloat(document.getElementById('tier1Price').value),
+            tier2Distance: parseFloat(document.getElementById('tier2Distance').value),
+            tier2Price: parseFloat(document.getElementById('tier2Price').value),
+            tier3Price: parseFloat(document.getElementById('tier3Price').value),
             ownership: document.getElementById('ownership').value,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -193,7 +196,7 @@ driverForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Hire Management - Fuel fields completely optional
+// Hire Management with Tiered Pricing
 const hireForm = document.getElementById('hireForm');
 hireForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -206,18 +209,43 @@ hireForm.addEventListener('submit', async (e) => {
         }
 
         const vehicle = vehicleDoc.data();
+        const distance = parseFloat(document.getElementById('distance').value);
+        
+        // Calculate hire amount based on distance tiers
+        let hireAmount = 0;
+        if (distance <= vehicle.tier1Distance) {
+            hireAmount = distance * vehicle.tier1Price;
+        } else if (distance <= vehicle.tier2Distance) {
+            hireAmount = (vehicle.tier1Distance * vehicle.tier1Price) + 
+                        ((distance - vehicle.tier1Distance) * vehicle.tier2Price);
+        } else {
+            hireAmount = (vehicle.tier1Distance * vehicle.tier1Price) + 
+                        ((vehicle.tier2Distance - vehicle.tier1Distance) * vehicle.tier2Price) +
+                        ((distance - vehicle.tier2Distance) * vehicle.tier3Price);
+        }
+        
+        // Apply minimum hire amount
+        hireAmount = Math.max(hireAmount, vehicle.minimumHire);
+
         const hire = {
             vehicleId: vehicleId,
             vehicleNumber: vehicle.vehicleNumber,
             month: document.getElementById('hireMonth').value,
             fromLocation: document.getElementById('fromLocation').value,
             toLocation: document.getElementById('toLocation').value,
-            distance: parseFloat(document.getElementById('distance').value),
-            perKmPrice: vehicle.perKmPrice,
+            distance: distance,
             hireDate: document.getElementById('hireDate').value,
             driverId: document.getElementById('hireDriver').value || null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            hireAmount: parseFloat(document.getElementById('distance').value) * vehicle.perKmPrice
+            hireAmount: hireAmount,
+            pricingTiers: {
+                tier1Distance: vehicle.tier1Distance,
+                tier1Price: vehicle.tier1Price,
+                tier2Distance: vehicle.tier2Distance,
+                tier2Price: vehicle.tier2Price,
+                tier3Price: vehicle.tier3Price,
+                minimumHire: vehicle.minimumHire
+            }
         };
 
         const fuelLiters = document.getElementById('fuelLiters').value;
@@ -243,7 +271,7 @@ hireForm.addEventListener('submit', async (e) => {
     }
 });
 
-// New: Advance Payment Management
+// Advance Payment Management
 const advancePaymentForm = document.getElementById('advancePaymentForm');
 advancePaymentForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -273,7 +301,6 @@ advancePaymentForm.addEventListener('submit', async (e) => {
     }
 });
 
-
 // Load Vehicles with real-time updates
 function loadVehicles() {
     db.collection('vehicles').orderBy('createdAt').onSnapshot((snapshot) => {
@@ -281,7 +308,7 @@ function loadVehicles() {
         vehiclesList.innerHTML = '';
 
         if (snapshot.empty) {
-            vehiclesList.innerHTML = '<tr><td colspan="5">No vehicles found</td></tr>';
+            vehiclesList.innerHTML = '<tr><td colspan="8">No vehicles found</td></tr>';
             return;
         }
 
@@ -291,7 +318,10 @@ function loadVehicles() {
             tr.innerHTML = `
                 <td>${vehicle.vehicleNumber}</td>
                 <td>${vehicle.vehicleSize}</td>
-                <td>${vehicle.perKmPrice.toFixed(2)}</td>
+                <td>${vehicle.minimumHire.toFixed(2)}</td>
+                <td>${vehicle.tier1Price.toFixed(2)}</td>
+                <td>${vehicle.tier2Price.toFixed(2)}</td>
+                <td>${vehicle.tier3Price.toFixed(2)}</td>
                 <td>${vehicle.ownership}</td>
                 <td>
                     <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
@@ -304,7 +334,7 @@ function loadVehicles() {
         populateVehicleDropdowns(snapshot);
     }, error => {
         console.error("Error loading vehicles:", error);
-        document.getElementById('vehiclesList').innerHTML = '<tr><td colspan="5">Error loading vehicles</td></tr>';
+        document.getElementById('vehiclesList').innerHTML = '<tr><td colspan="8">Error loading vehicles</td></tr>';
     });
 }
 
@@ -342,7 +372,7 @@ function loadDrivers() {
     });
 }
 
-// Load Hires with real-time updates (Fuel fields optional)
+// Load Hires with real-time updates
 async function loadHires() {
     try {
         const hiresSnapshot = await db.collection('hires').orderBy('createdAt').get();
@@ -354,7 +384,7 @@ async function loadHires() {
         let totalFuel = 0;
         let totalHire = 0;
         let totalDistance = 0;
-        let totalAdvancePayments = 0; // New variable for total advance payments
+        let totalAdvancePayments = 0;
 
         if (hiresSnapshot.empty) {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
@@ -393,7 +423,7 @@ async function loadHires() {
                 <td>${hire.fuelLiters ? hire.fuelLiters.toFixed(1) : '-'}</td>
                 <td>${hire.fuelPricePerLiter ? hire.fuelPricePerLiter.toFixed(2) : '-'}</td>
                 <td>${hire.fuelCost ? hire.fuelCost.toFixed(2) : '-'}</td>
-                <td>${hire.perKmPrice.toFixed(2)}</td>
+                <td>${hire.pricingTiers ? 'Tiered Pricing' : '-'}</td>
                 <td>${hire.hireAmount.toFixed(2)}</td>
                 <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
                 <td>
@@ -404,13 +434,9 @@ async function loadHires() {
             hiresList.appendChild(tr);
         });
 
-        // Calculate total advance payments for currently displayed hires (if not filtered)
-        // If filters are applied, this total will be specific to the filtered data.
-        // For initial load, it sums up all advance payments.
         advancePaymentsSnapshot.forEach(doc => {
-             totalAdvancePayments += doc.data().amount;
+            totalAdvancePayments += doc.data().amount;
         });
-
 
         updateTotals(totalFuel, totalHire, totalDistance, totalAdvancePayments);
     } catch (error) {
@@ -420,7 +446,7 @@ async function loadHires() {
     }
 }
 
-// New: Load Advance Payments with real-time updates
+// Load Advance Payments with real-time updates
 function loadAdvancePayments() {
     db.collection('advancePayments').orderBy('createdAt').onSnapshot(async (snapshot) => {
         const advancePaymentsList = document.getElementById('advancePaymentsList');
@@ -431,7 +457,6 @@ function loadAdvancePayments() {
             return;
         }
 
-        // Fetch vehicle numbers for display
         const vehiclesSnapshot = await db.collection('vehicles').get();
         const vehicles = {};
         vehiclesSnapshot.forEach(doc => {
@@ -459,12 +484,10 @@ function loadAdvancePayments() {
     });
 }
 
-
-// Modified updateTotals function to include totalDistance and totalAdvancePayments
+// Update totals display
 function updateTotals(fuelCost, hireAmount, totalDistance, totalAdvancePayments) {
     document.getElementById('totalFuelCost').textContent = fuelCost.toFixed(2);
     document.getElementById('totalHireAmount').textContent = hireAmount.toFixed(2);
-    // Calculate net profit after subtracting advance payments
     document.getElementById('netProfit').textContent = (hireAmount - fuelCost - totalAdvancePayments).toFixed(2);
     document.getElementById('totalDistance').textContent = totalDistance.toFixed(1);
 }
@@ -475,12 +498,11 @@ function populateVehicleDropdowns(vehiclesSnapshot) {
         document.getElementById('hireVehicle'),
         document.getElementById('editHireVehicle'),
         document.getElementById('filterVehicle'),
-        document.getElementById('advancePaymentVehicle'), // New dropdown
-        document.getElementById('editAdvancePaymentVehicle') // New dropdown
+        document.getElementById('advancePaymentVehicle'),
+        document.getElementById('editAdvancePaymentVehicle')
     ];
 
     dropdowns.forEach(dropdown => {
-        // Keep the "Select Vehicle" or "All Vehicles" option
         while (dropdown.options.length > (dropdown.id === 'filterVehicle' ? 1 : 1)) dropdown.remove(1);
 
         if (!vehiclesSnapshot.empty) {
@@ -488,7 +510,7 @@ function populateVehicleDropdowns(vehiclesSnapshot) {
                 const vehicle = doc.data();
                 const option = document.createElement('option');
                 option.value = doc.id;
-                option.textContent = `${vehicle.vehicleNumber} (${vehicle.vehicleSize})`;
+                option.textContent = `${vehicle.vehicleNumber} (${vehicle.vehicleSize}ft)`;
                 dropdown.appendChild(option);
             });
         }
@@ -529,7 +551,7 @@ document.addEventListener('click', async (e) => {
                 if (table === 'vehiclesTable') collectionName = 'vehicles';
                 else if (table === 'driversTable') collectionName = 'drivers';
                 else if (table === 'hiresTable') collectionName = 'hires';
-                else if (table === 'advancePaymentsTable') collectionName = 'advancePayments'; // New
+                else if (table === 'advancePaymentsTable') collectionName = 'advancePayments';
 
                 if (collectionName) {
                     await db.collection(collectionName).doc(id).delete();
@@ -554,7 +576,12 @@ document.addEventListener('click', async (e) => {
                     document.getElementById('editVehicleId').value = id;
                     document.getElementById('editVehicleNumber').value = vehicle.vehicleNumber;
                     document.getElementById('editVehicleSize').value = vehicle.vehicleSize;
-                    document.getElementById('editPerKmPrice').value = vehicle.perKmPrice;
+                    document.getElementById('editMinimumHire').value = vehicle.minimumHire;
+                    document.getElementById('editTier1Distance').value = vehicle.tier1Distance;
+                    document.getElementById('editTier1Price').value = vehicle.tier1Price;
+                    document.getElementById('editTier2Distance').value = vehicle.tier2Distance;
+                    document.getElementById('editTier2Price').value = vehicle.tier2Price;
+                    document.getElementById('editTier3Price').value = vehicle.tier3Price;
                     document.getElementById('editOwnership').value = vehicle.ownership;
                     document.getElementById('editVehicleModal').style.display = 'block';
                 }
@@ -584,19 +611,17 @@ document.addEventListener('click', async (e) => {
                     document.getElementById('editFuelLiters').value = hire.fuelLiters || '';
                     document.getElementById('editFuelPricePerLiter').value = hire.fuelPricePerLiter || '';
 
-                    // Use setTimeout to ensure options are populated before setting value
                     setTimeout(() => {
                         document.getElementById('editHireVehicle').value = hire.vehicleId;
                         if (hire.driverId) {
                             document.getElementById('editHireDriver').value = hire.driverId;
                         }
-                    }, 100); // Small delay
-
+                    }, 100);
 
                     document.getElementById('editHireModal').style.display = 'block';
                 }
             }
-            else if (table === 'advancePaymentsTable') { // New: Edit Advance Payment
+            else if (table === 'advancePaymentsTable') {
                 const doc = await db.collection('advancePayments').doc(id).get();
                 if (doc.exists) {
                     const ap = doc.data();
@@ -619,7 +644,6 @@ document.addEventListener('click', async (e) => {
     }
 });
 
-
 // Edit form submissions
 document.getElementById('editVehicleForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -627,8 +651,13 @@ document.getElementById('editVehicleForm').addEventListener('submit', async (e) 
         const id = document.getElementById('editVehicleId').value;
         const updates = {
             vehicleNumber: document.getElementById('editVehicleNumber').value,
-            vehicleSize: document.getElementById('editVehicleSize').value,
-            perKmPrice: parseFloat(document.getElementById('editPerKmPrice').value),
+            vehicleSize: parseFloat(document.getElementById('editVehicleSize').value),
+            minimumHire: parseFloat(document.getElementById('editMinimumHire').value),
+            tier1Distance: parseFloat(document.getElementById('editTier1Distance').value),
+            tier1Price: parseFloat(document.getElementById('editTier1Price').value),
+            tier2Distance: parseFloat(document.getElementById('editTier2Distance').value),
+            tier2Price: parseFloat(document.getElementById('editTier2Price').value),
+            tier3Price: parseFloat(document.getElementById('editTier3Price').value),
             ownership: document.getElementById('editOwnership').value,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -673,21 +702,45 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
         }
 
         const vehicle = vehicleDoc.data();
+        const distance = parseFloat(document.getElementById('editDistance').value);
+        
+        // Calculate hire amount based on distance tiers
+        let hireAmount = 0;
+        if (distance <= vehicle.tier1Distance) {
+            hireAmount = distance * vehicle.tier1Price;
+        } else if (distance <= vehicle.tier2Distance) {
+            hireAmount = (vehicle.tier1Distance * vehicle.tier1Price) + 
+                        ((distance - vehicle.tier1Distance) * vehicle.tier2Price);
+        } else {
+            hireAmount = (vehicle.tier1Distance * vehicle.tier1Price) + 
+                        ((vehicle.tier2Distance - vehicle.tier1Distance) * vehicle.tier2Price) +
+                        ((distance - vehicle.tier2Distance) * vehicle.tier3Price);
+        }
+        
+        // Apply minimum hire amount
+        hireAmount = Math.max(hireAmount, vehicle.minimumHire);
+
         const updates = {
             vehicleId: vehicleId,
             vehicleNumber: vehicle.vehicleNumber,
             month: document.getElementById('editHireMonth').value,
             fromLocation: document.getElementById('editFromLocation').value,
             toLocation: document.getElementById('editToLocation').value,
-            distance: parseFloat(document.getElementById('editDistance').value),
-            perKmPrice: vehicle.perKmPrice,
+            distance: distance,
             hireDate: document.getElementById('editHireDate').value,
             driverId: document.getElementById('editHireDriver').value || null,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            hireAmount: parseFloat(document.getElementById('editDistance').value) * vehicle.perKmPrice
+            hireAmount: hireAmount,
+            pricingTiers: {
+                tier1Distance: vehicle.tier1Distance,
+                tier1Price: vehicle.tier1Price,
+                tier2Distance: vehicle.tier2Distance,
+                tier2Price: vehicle.tier2Price,
+                tier3Price: vehicle.tier3Price,
+                minimumHire: vehicle.minimumHire
+            }
         };
 
-        // Handle optional fuel fields
         const fuelLiters = document.getElementById('editFuelLiters').value;
         const fuelPricePerLiter = document.getElementById('editFuelPricePerLiter').value;
 
@@ -718,7 +771,6 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
     }
 });
 
-// New: Edit Advance Payment form submission
 document.getElementById('editAdvancePaymentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
@@ -747,31 +799,37 @@ document.getElementById('editAdvancePaymentForm').addEventListener('submit', asy
     }
 });
 
-
-// Filter functionality - Fixed version
+// Filter functionality
 document.getElementById('applyFilter').addEventListener('click', async () => {
     try {
         const month = document.getElementById('filterMonth').value;
         const vehicle = document.getElementById('filterVehicle').value;
 
         let query = db.collection('hires');
+        let advancePaymentsQuery = db.collection('advancePayments');
 
         if (month !== 'All') {
             query = query.where('month', '==', month);
+            advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
         }
         if (vehicle !== 'All') {
             query = query.where('vehicleId', '==', vehicle);
+            advancePaymentsQuery = advancePaymentsQuery.where('vehicleId', '==', vehicle);
         }
 
         query = query.orderBy('createdAt');
+        
+        const [hiresSnapshot, advancePaymentsSnapshot] = await Promise.all([
+            query.get(),
+            advancePaymentsQuery.get()
+        ]);
 
-        const hiresSnapshot = await query.get();
         const hiresList = document.getElementById('hiresList');
         hiresList.innerHTML = '';
         let totalFuel = 0;
         let totalHire = 0;
         let totalDistance = 0;
-        let totalAdvancePayments = 0; // Initialize total advance payments for filtered data
+        let totalAdvancePayments = 0;
 
         if (hiresSnapshot.empty) {
             hiresList.innerHTML = '<tr><td colspan="12">No hire records found for selected filter</td></tr>';
@@ -784,16 +842,6 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
         driversSnapshot.forEach(doc => {
             drivers[doc.id] = doc.data().name;
         });
-
-        // Fetch advance payments that match the applied filters
-        let advancePaymentsQuery = db.collection('advancePayments');
-        if (month !== 'All') {
-            advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
-        }
-        if (vehicle !== 'All') {
-            advancePaymentsQuery = advancePaymentsQuery.where('vehicleId', '==', vehicle);
-        }
-        const advancePaymentsSnapshot = await advancePaymentsQuery.get();
 
         advancePaymentsSnapshot.forEach(doc => {
             totalAdvancePayments += doc.data().amount;
@@ -818,7 +866,7 @@ document.getElementById('applyFilter').addEventListener('click', async () => {
                 <td>${hire.fuelLiters ? hire.fuelLiters.toFixed(1) : '-'}</td>
                 <td>${hire.fuelPricePerLiter ? hire.fuelPricePerLiter.toFixed(2) : '-'}</td>
                 <td>${hire.fuelCost ? hire.fuelCost.toFixed(2) : '-'}</td>
-                <td>${hire.perKmPrice.toFixed(2)}</td>
+                <td>${hire.pricingTiers ? 'Tiered Pricing' : '-'}</td>
                 <td>${hire.hireAmount.toFixed(2)}</td>
                 <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
                 <td>
@@ -858,7 +906,7 @@ function exportHiresToPDF() {
 
         const img = new Image();
         img.src = logoUrl;
-        img.onload = async function() { // Made onload async to await advance payments
+        img.onload = async function() {
             const imgWidth = 30;
             const imgHeight = 30;
             const pageWidth = doc.internal.pageSize.getWidth();
@@ -889,7 +937,7 @@ function exportHiresToPDF() {
                 const tableData = [];
                 tableData.push([
                     'Date', 'Vehicle', 'From', 'To', 'Distance',
-                    'Fuel (L)', 'Fuel Price/L', 'Fuel Cost', 'Price/KM',
+                    'Fuel (L)', 'Fuel Price/L', 'Fuel Cost', 'Pricing',
                     'Hire Amount', 'Driver'
                 ]);
 
@@ -931,7 +979,6 @@ function exportHiresToPDF() {
                 const netProfit = document.getElementById('netProfit').textContent;
                 const totalDistance = document.getElementById('totalDistance').textContent;
 
-                // Fetch and sum advance payments for the filtered criteria
                 let advancePaymentsQuery = db.collection('advancePayments');
                 if (month !== 'All') {
                     advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
@@ -947,7 +994,7 @@ function exportHiresToPDF() {
 
                 let finalY = doc.lastAutoTable.finalY + 10;
 
-                const textHeight = 7 * 5; // Approx height for 5 lines of text (including advance)
+                const textHeight = 7 * 5;
                 if (finalY + textHeight > doc.internal.pageSize.getHeight() - 20) {
                     doc.addPage();
                     finalY = 20;
@@ -958,10 +1005,10 @@ function exportHiresToPDF() {
                 doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY);
                 doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY + 7);
                 doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 14);
-                doc.text(`Total Advance Payments: LKR ${filteredAdvancePaymentsTotal.toFixed(2)}`, 15, finalY + 21); // Display advance
+                doc.text(`Total Advance Payments: LKR ${filteredAdvancePaymentsTotal.toFixed(2)}`, 15, finalY + 21);
                 doc.setFontSize(12);
                 doc.setTextColor(231, 76, 60);
-                doc.text(`Net Profit (After Advances): LKR ${netProfit}`, 15, finalY + 31); // Adjusted Y
+                doc.text(`Net Profit (After Advances): LKR ${netProfit}`, 15, finalY + 31);
 
                 finalY = finalY + 44;
                 if (finalY > doc.internal.pageSize.getHeight() - 20) {
@@ -977,7 +1024,7 @@ function exportHiresToPDF() {
             showMessage('PDF exported successfully!', 'success');
         };
 
-        img.onerror = async function() { // Made onerror async too
+        img.onerror = async function() {
             console.warn("Logo failed to load, generating PDF without it");
 
             const pageWidth = doc.internal.pageSize.getWidth();
@@ -1005,7 +1052,7 @@ function exportHiresToPDF() {
                 const tableData = [];
                 tableData.push([
                     'Date', 'Vehicle', 'From', 'To', 'Distance',
-                    'Fuel (L)', 'Fuel Price/L', 'Fuel Cost', 'Price/KM',
+                    'Fuel (L)', 'Fuel Price/L', 'Fuel Cost', 'Pricing',
                     'Hire Amount', 'Driver'
                 ]);
 
@@ -1047,7 +1094,6 @@ function exportHiresToPDF() {
                 const netProfit = document.getElementById('netProfit').textContent;
                 const totalDistance = document.getElementById('totalDistance').textContent;
 
-                // Fetch and sum advance payments for the filtered criteria (again, in case of error with logo)
                 let advancePaymentsQuery = db.collection('advancePayments');
                 if (month !== 'All') {
                     advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
@@ -1097,7 +1143,6 @@ function exportHiresToPDF() {
         showMessage("Failed to generate PDF. Please check console for details.", 'error');
     }
 }
-
 
 // Custom message box and confirmation dialog
 function showMessage(message, type) {
@@ -1193,10 +1238,10 @@ function initApp() {
     loadVehicles();
     loadDrivers();
     loadHires();
-    loadAdvancePayments(); // New: Load advance payments
+    loadAdvancePayments();
 
     // Initialize totals display
-    updateTotals(0, 0, 0, 0); // Initialize with total distance and advance payments
+    updateTotals(0, 0, 0, 0);
 
     // Add PDF export button event listener
     document.getElementById('exportPdfBtn').addEventListener('click', exportHiresToPDF);

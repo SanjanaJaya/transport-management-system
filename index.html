@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jayasooriya Enterprises - Transport Management</title>
+    <title>Jayasooriya Transport - Transport Management</title>
     <link rel="icon" href="https://i.postimg.cc/g0rNcKpN/LOGO.png" type="image/png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -17,7 +17,7 @@
     <div id="loginSection" class="login-container">
         <div class="login-box">
             <img src="https://i.postimg.cc/g0rNcKpN/LOGO.png" alt="Jayasooriya Enterprises Logo" class="login-logo">
-            <h2>JAYASOORIYA ENTERPRISES</h2>
+            <h2>JAYASOORIYA TRANSPORT</h2>
             <form id="loginForm">
                 <div class="form-group">
                     <label for="username">Username:</label>
@@ -36,7 +36,7 @@
     <div id="appSection" style="display: none;">
         <header>
             <div class="header-left">
-                <span class="header-company-name">JAYASOORIYA ENTERPRISES - TRANSPORT MANAGEMENT SYSTEM</span>
+                <span class="header-company-name">JAYASOORIYA TRANSPORT - TRANSPORT MANAGEMENT SYSTEM</span>
             </div>
             <div class="header-right">
                 <span class="admin-info"><i class="fas fa-user-tie"></i> Administrator</span>
@@ -68,7 +68,10 @@
                                 <tr>
                                     <th>Vehicle Number</th>
                                     <th>Size (ft)</th>
-                                    <th>Price per KM</th>
+                                    <th>Min. Hire</th>
+                                    <th>Tier 1 (0-100km)</th>
+                                    <th>Tier 2 (100-250km)</th>
+                                    <th>Tier 3 (250km+)</th>
                                     <th>Ownership</th>
                                     <th>Actions</th>
                                 </tr>
@@ -212,11 +215,31 @@
                     </div>
                     <div class="form-group">
                         <label for="vehicleSize">Size (ft):</label>
-                        <input type="text" id="vehicleSize" required>
+                        <input type="number" id="vehicleSize" step="0.1" required>
                     </div>
                     <div class="form-group">
-                        <label for="perKmPrice">Price per KM (LKR):</label>
-                        <input type="number" id="perKmPrice" step="0.01" required>
+                        <label for="minimumHire">Minimum Hire Amount (LKR):</label>
+                        <input type="number" id="minimumHire" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tier1Distance">Tier 1 Distance (KM):</label>
+                        <input type="number" id="tier1Distance" value="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tier1Price">Tier 1 Price (LKR/KM):</label>
+                        <input type="number" id="tier1Price" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tier2Distance">Tier 2 Distance (KM):</label>
+                        <input type="number" id="tier2Distance" value="250" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tier2Price">Tier 2 Price (LKR/KM):</label>
+                        <input type="number" id="tier2Price" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tier3Price">Tier 3 Price (LKR/KM):</label>
+                        <input type="number" id="tier3Price" step="0.01" required>
                     </div>
                     <div class="form-group">
                         <label for="ownership">Ownership:</label>
@@ -372,11 +395,31 @@
                     </div>
                     <div class="form-group">
                         <label for="editVehicleSize">Size (ft):</label>
-                        <input type="text" id="editVehicleSize" required>
+                        <input type="number" id="editVehicleSize" step="0.1" required>
                     </div>
                     <div class="form-group">
-                        <label for="editPerKmPrice">Price per KM (LKR):</label>
-                        <input type="number" id="editPerKmPrice" step="0.01" required>
+                        <label for="editMinimumHire">Minimum Hire Amount (LKR):</label>
+                        <input type="number" id="editMinimumHire" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTier1Distance">Tier 1 Distance (KM):</label>
+                        <input type="number" id="editTier1Distance" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTier1Price">Tier 1 Price (LKR/KM):</label>
+                        <input type="number" id="editTier1Price" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTier2Distance">Tier 2 Distance (KM):</label>
+                        <input type="number" id="editTier2Distance" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTier2Price">Tier 2 Price (LKR/KM):</label>
+                        <input type="number" id="editTier2Price" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTier3Price">Tier 3 Price (LKR/KM):</label>
+                        <input type="number" id="editTier3Price" step="0.01" required>
                     </div>
                     <div class="form-group">
                         <label for="editOwnership">Ownership:</label>
@@ -524,7 +567,7 @@
         </div>
 
         <footer>
-            <p>&copy; 2025 Jayasooriya Enterprises. All rights reserved.</p>
+            <p>&copy; 2025 Jayasooriya Transport. All rights reserved.</p>
         </footer>
     </div>
 
