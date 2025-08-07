@@ -53,7 +53,6 @@
                 <button id="driversTab"><i class="fas fa-user"></i> Drivers</button>
                 <button id="hiresTab"><i class="fas fa-clipboard-list"></i> Vehicle Hires</button>
                 <button id="advancePaymentsTab"><i class="fas fa-money-bill-wave"></i> Advance Payments</button>
-                <button id="lettersTab"><i class="fas fa-envelope"></i> Company Letters</button>
             </nav>
 
             <main class="content-area">
@@ -199,28 +198,6 @@
                             </thead>
                             <tbody id="advancePaymentsList">
                                 </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section id="lettersSection">
-                    <div class="section-header">
-                        <h2>Company Letter Management</h2>
-                        <button id="addLetterBtn" class="add-btn"><i class="fas fa-plus-circle"></i> Create Letter</button>
-                    </div>
-                    <p class="section-description">Create and manage official company letters</p>
-                    <div class="table-container">
-                        <table id="lettersTable">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Subject</th>
-                                    <th>Recipient</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lettersList">
-                            </tbody>
                         </table>
                     </div>
                 </section>
@@ -402,68 +379,6 @@
                         <input type="number" id="advancePaymentAmount" step="0.01" required>
                     </div>
                     <button type="submit"><i class="fas fa-plus-circle"></i> Add Payment</button>
-                </form>
-            </div>
-        </div>
-
-        <div id="addLetterModal" class="modal">
-            <div class="modal-content" style="max-width: 800px;">
-                <span class="close">&times;</span>
-                <h3>Create New Company Letter</h3>
-                <form id="letterForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="letterDate">Date:</label>
-                            <input type="date" id="letterDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="letterRefNo">Reference No:</label>
-                            <input type="text" id="letterRefNo">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="letterRecipient">To (Recipient):</label>
-                        <input type="text" id="letterRecipient" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="letterRecipientAddress">Recipient Address:</label>
-                        <textarea id="letterRecipientAddress" rows="3"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="letterSubject">Subject:</label>
-                        <input type="text" id="letterSubject" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="letterSalutation">Salutation:</label>
-                        <input type="text" id="letterSalutation" value="Dear Sir/Madam,">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="letterBody">Body:</label>
-                        <textarea id="letterBody" rows="8" required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="letterClosing">Closing:</label>
-                        <input type="text" id="letterClosing" value="Yours faithfully,">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="letterSenderName">Sender Name:</label>
-                        <input type="text" id="letterSenderName" value="Jayasooriya Transport">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="letterSenderPosition">Sender Position:</label>
-                        <input type="text" id="letterSenderPosition" value="Manager">
-                    </div>
-                    
-                    <button type="submit"><i class="fas fa-file-pdf"></i> Generate Letter</button>
-                    <button type="button" id="saveLetterBtn" style="margin-left: 10px;"><i class="fas fa-save"></i> Save Draft</button>
                 </form>
             </div>
         </div>
