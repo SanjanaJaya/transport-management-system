@@ -915,7 +915,7 @@ function exportHiresToPDF() {
 
             doc.setFontSize(20);
             doc.setTextColor(231, 76, 60);
-            doc.text('JAYASOORIYA ENTERPRISES', pageWidth / 2, 50, { align: 'center' });
+            doc.text('JAYASOORIYA TRANSPORT', pageWidth / 2, 50, { align: 'center' });
             doc.setFontSize(14);
             doc.setTextColor(0, 0, 0);
             doc.text('Vehicle Hire Report', pageWidth / 2, 60, { align: 'center' });
