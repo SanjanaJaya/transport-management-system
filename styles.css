@@ -1147,3 +1147,14 @@ footer {
         width: 100%;
     }
 }
+
+/* Add these styles to ensure proper column widths */
+#hiresTable th:nth-child(10), 
+#hiresTable td:nth-child(10) {
+    width: 80px;
+}
+
+#hiresTable th:nth-child(11), 
+#hiresTable td:nth-child(11) {
+    width: 100px;
+}

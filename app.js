@@ -1,3 +1,5 @@
+// Updated app.js with all requested changes
+
 // Login Functionality with Auto-Logout
 document.addEventListener('DOMContentLoaded', function() {
     const loginSection = document.getElementById('loginSection');
@@ -161,6 +163,9 @@ vehicleForm.addEventListener('submit', async (e) => {
             tier2Distance: parseFloat(document.getElementById('tier2Distance').value),
             tier2Price: parseFloat(document.getElementById('tier2Price').value),
             tier3Price: parseFloat(document.getElementById('tier3Price').value),
+            waitingPrice1: parseFloat(document.getElementById('waitingPrice1').value),
+            waitingPrice2: parseFloat(document.getElementById('waitingPrice2').value),
+            loadingCharge: parseFloat(document.getElementById('loadingCharge').value),
             ownership: document.getElementById('ownership').value,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -227,6 +232,20 @@ hireForm.addEventListener('submit', async (e) => {
         // Apply minimum hire amount
         hireAmount = Math.max(hireAmount, vehicle.minimumHire);
 
+        // Waiting time calculation
+        const waitingHours = parseFloat(document.getElementById('waitingHours').value) || 0;
+        let waitingCost = 0;
+        if (waitingHours > 0) {
+            if (waitingHours <= 24) {
+                waitingCost = waitingHours * vehicle.waitingPrice1;
+            } else {
+                waitingCost = (24 * vehicle.waitingPrice1) + ((waitingHours - 24) * vehicle.waitingPrice2);
+            }
+        }
+
+        // Loading charge
+        const loadingCharge = document.getElementById('loading').checked ? vehicle.loadingCharge : 0;
+
         const hire = {
             vehicleId: vehicleId,
             vehicleNumber: vehicle.vehicleNumber,
@@ -237,14 +256,21 @@ hireForm.addEventListener('submit', async (e) => {
             hireDate: document.getElementById('hireDate').value,
             driverId: document.getElementById('hireDriver').value || null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            hireAmount: hireAmount,
+            hireAmount: hireAmount + waitingCost + loadingCharge,
+            waitingHours: waitingHours,
+            waitingCost: waitingCost,
+            loading: document.getElementById('loading').checked,
+            loadingCharge: loadingCharge,
             pricingTiers: {
                 tier1Distance: vehicle.tier1Distance,
                 tier1Price: vehicle.tier1Price,
                 tier2Distance: vehicle.tier2Distance,
                 tier2Price: vehicle.tier2Price,
                 tier3Price: vehicle.tier3Price,
-                minimumHire: vehicle.minimumHire
+                minimumHire: vehicle.minimumHire,
+                waitingPrice1: vehicle.waitingPrice1,
+                waitingPrice2: vehicle.waitingPrice2,
+                loadingCharge: vehicle.loadingCharge
             }
         };
 
@@ -306,12 +332,10 @@ function loadVehicles() {
     db.collection('vehicles').orderBy('createdAt').onSnapshot((snapshot) => {
         const vehiclesList = document.getElementById('vehiclesList');
         vehiclesList.innerHTML = '';
-
         if (snapshot.empty) {
-            vehiclesList.innerHTML = '<tr><td colspan="8">No vehicles found</td></tr>';
+            vehiclesList.innerHTML = '<tr><td colspan="11">No vehicles found</td></tr>';
             return;
         }
-
         snapshot.forEach(doc => {
             const vehicle = doc.data();
             const tr = document.createElement('tr');
@@ -322,6 +346,9 @@ function loadVehicles() {
                 <td>${vehicle.tier1Price.toFixed(2)}</td>
                 <td>${vehicle.tier2Price.toFixed(2)}</td>
                 <td>${vehicle.tier3Price.toFixed(2)}</td>
+                <td>${vehicle.waitingPrice1.toFixed(2)}</td>
+                <td>${vehicle.waitingPrice2.toFixed(2)}</td>
+                <td>${vehicle.loadingCharge.toFixed(2)}</td>
                 <td>${vehicle.ownership}</td>
                 <td>
                     <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
@@ -330,11 +357,11 @@ function loadVehicles() {
             `;
             vehiclesList.appendChild(tr);
         });
-
         populateVehicleDropdowns(snapshot);
+        setupActionListeners('vehicles'); // Add this line
     }, error => {
         console.error("Error loading vehicles:", error);
-        document.getElementById('vehiclesList').innerHTML = '<tr><td colspan="8">Error loading vehicles</td></tr>';
+        document.getElementById('vehiclesList').innerHTML = '<tr><td colspan="11">Error loading vehicles</td></tr>';
     });
 }
 
@@ -343,12 +370,10 @@ function loadDrivers() {
     db.collection('drivers').orderBy('createdAt').onSnapshot((snapshot) => {
         const driversList = document.getElementById('driversList');
         driversList.innerHTML = '';
-
         if (snapshot.empty) {
             driversList.innerHTML = '<tr><td colspan="5">No drivers found</td></tr>';
             return;
         }
-
         snapshot.forEach(doc => {
             const driver = doc.data();
             const tr = document.createElement('tr');
@@ -364,8 +389,8 @@ function loadDrivers() {
             `;
             driversList.appendChild(tr);
         });
-
         populateDriverDropdowns(snapshot);
+        setupActionListeners('drivers'); // Add this line
     }, error => {
         console.error("Error loading drivers:", error);
         document.getElementById('driversList').innerHTML = '<tr><td colspan="5">Error loading drivers</td></tr>';
@@ -381,14 +406,17 @@ async function loadHires() {
 
         const hiresList = document.getElementById('hiresList');
         hiresList.innerHTML = '';
+
         let totalFuel = 0;
         let totalHire = 0;
         let totalDistance = 0;
+        let totalWaiting = 0;
+        let totalLoading = 0;
         let totalAdvancePayments = 0;
 
         if (hiresSnapshot.empty) {
-            hiresList.innerHTML = '<tr><td colspan="12">No hire records found</td></tr>';
-            updateTotals(0, 0, 0, 0);
+            hiresList.innerHTML = '<tr><td colspan="15">No hire records found</td></tr>';
+            updateTotals(0, 0, 0, 0, 0, 0);
             return;
         }
 
@@ -406,71 +434,83 @@ async function loadHires() {
 
         hiresSnapshot.forEach(doc => {
             const hire = doc.data();
-            totalHire += hire.hireAmount || 0;
-            totalDistance += hire.distance || 0;
-
-            if (hire.fuelCost) {
-                totalFuel += hire.fuelCost;
-            }
-
+            const driverName = hire.driverId ? drivers[hire.driverId] || 'N/A' : 'N/A';
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${hire.hireDate}</td>
-                <td>${hire.vehicleNumber}</td>
-                <td>${hire.fromLocation}</td>
-                <td>${hire.toLocation}</td>
-                <td>${hire.distance.toFixed(1)}</td>
-                <td>${hire.fuelLiters ? hire.fuelLiters.toFixed(1) : '-'}</td>
-                <td>${hire.fuelPricePerLiter ? hire.fuelPricePerLiter.toFixed(2) : '-'}</td>
-                <td>${hire.fuelCost ? hire.fuelCost.toFixed(2) : '-'}</td>
-                <td>${hire.pricingTiers ? 'Tiered Pricing' : '-'}</td>
-                <td>${hire.hireAmount.toFixed(2)}</td>
-                <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
-                <td>
+                <td class="text-center">${hire.hireDate}</td>
+                <td class="text-center">${hire.vehicleNumber}</td>
+                <td class="text-center">${hire.fromLocation}</td>
+                <td class="text-center">${hire.toLocation}</td>
+                <td class="text-center">${hire.distance.toFixed(2)}</td>
+                <td class="text-center">${hire.fuelLiters ? hire.fuelLiters.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.fuelPricePerLiter ? hire.fuelPricePerLiter.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.fuelCost ? hire.fuelCost.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.waitingHours ? hire.waitingHours.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.waitingCost ? hire.waitingCost.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.loading ? 'Yes' : 'No'}</td>
+                <td class="text-center">${hire.loadingCharge ? hire.loadingCharge.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.hireAmount.toFixed(2)}</td>
+                <td class="text-center">${driverName}</td>
+                <td class="text-center">
                     <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
                     <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
                 </td>
             `;
             hiresList.appendChild(tr);
+            
+            totalDistance += hire.distance;
+            totalFuel += hire.fuelCost || 0;
+            totalHire += hire.hireAmount;
+            totalWaiting += hire.waitingCost || 0;
+            totalLoading += hire.loadingCharge || 0;
         });
+        
+        const currentMonth = document.getElementById('filterMonth').value;
+        const currentVehicleId = document.getElementById('filterVehicle').value;
 
-        advancePaymentsSnapshot.forEach(doc => {
-            totalAdvancePayments += doc.data().amount;
-        });
+        // Calculate filtered advance payments
+        if (currentMonth !== 'All' && currentVehicleId !== 'All') {
+            const key = `${currentMonth}-${currentVehicleId}`;
+            totalAdvancePayments = advancePaymentsByMonthAndVehicle[key] || 0;
+        } else if (currentMonth !== 'All' && currentVehicleId === 'All') {
+            totalAdvancePayments = Object.keys(advancePaymentsByMonthAndVehicle)
+                .filter(key => key.startsWith(currentMonth))
+                .reduce((sum, key) => sum + advancePaymentsByMonthAndVehicle[key], 0);
+        } else if (currentMonth === 'All' && currentVehicleId !== 'All') {
+            totalAdvancePayments = Object.keys(advancePaymentsByMonthAndVehicle)
+                .filter(key => key.endsWith(currentVehicleId))
+                .reduce((sum, key) => sum + advancePaymentsByMonthAndVehicle[key], 0);
+        } else {
+            totalAdvancePayments = Object.values(advancePaymentsByMonthAndVehicle)
+                .reduce((sum, amount) => sum + amount, 0);
+        }
+        
+        updateTotals(totalDistance, totalFuel, totalHire, totalWaiting, totalLoading, totalAdvancePayments);
+        setupActionListeners('hires');
 
-        updateTotals(totalFuel, totalHire, totalDistance, totalAdvancePayments);
     } catch (error) {
         console.error("Error loading hires:", error);
-        document.getElementById('hiresList').innerHTML = '<tr><td colspan="12">Error loading hire records</td></tr>';
-        updateTotals(0, 0, 0, 0);
+        document.getElementById('hiresList').innerHTML = '<tr><td colspan="15">Error loading hire records</td></tr>';
     }
 }
 
 // Load Advance Payments with real-time updates
 function loadAdvancePayments() {
-    db.collection('advancePayments').orderBy('createdAt').onSnapshot(async (snapshot) => {
+    db.collection('advancePayments').orderBy('createdAt').onSnapshot((snapshot) => {
         const advancePaymentsList = document.getElementById('advancePaymentsList');
         advancePaymentsList.innerHTML = '';
-
         if (snapshot.empty) {
             advancePaymentsList.innerHTML = '<tr><td colspan="5">No advance payments found</td></tr>';
             return;
         }
-
-        const vehiclesSnapshot = await db.collection('vehicles').get();
-        const vehicles = {};
-        vehiclesSnapshot.forEach(doc => {
-            vehicles[doc.id] = doc.data().vehicleNumber;
-        });
-
         snapshot.forEach(doc => {
-            const ap = doc.data();
+            const payment = doc.data();
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${ap.date}</td>
-                <td>${ap.month}</td>
-                <td>${vehicles[ap.vehicleId] || 'N/A'}</td>
-                <td>${ap.amount.toFixed(2)}</td>
+                <td>${payment.date}</td>
+                <td>${payment.vehicleNumber}</td>
+                <td>${payment.month}</td>
+                <td>${payment.amount.toFixed(2)}</td>
                 <td>
                     <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
                     <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
@@ -478,232 +518,158 @@ function loadAdvancePayments() {
             `;
             advancePaymentsList.appendChild(tr);
         });
+        setupActionListeners('advancePayments');
     }, error => {
         console.error("Error loading advance payments:", error);
         document.getElementById('advancePaymentsList').innerHTML = '<tr><td colspan="5">Error loading advance payments</td></tr>';
     });
 }
 
-// Update totals display
-function updateTotals(fuelCost, hireAmount, totalDistance, totalAdvancePayments) {
-    document.getElementById('totalFuelCost').textContent = fuelCost.toFixed(2);
-    document.getElementById('totalHireAmount').textContent = hireAmount.toFixed(2);
-    document.getElementById('netProfit').textContent = (hireAmount - fuelCost - totalAdvancePayments).toFixed(2);
-    document.getElementById('totalDistance').textContent = totalDistance.toFixed(1);
-}
+// Edit/Delete Functionality
+function setupActionListeners(collectionName) {
+    document.querySelectorAll(`#${collectionName}Section .edit-btn`).forEach(button => {
+        button.addEventListener('click', (e) => handleEdit(e, collectionName));
+    });
 
-// Populate vehicle dropdowns
-function populateVehicleDropdowns(vehiclesSnapshot) {
-    const dropdowns = [
-        document.getElementById('hireVehicle'),
-        document.getElementById('editHireVehicle'),
-        document.getElementById('filterVehicle'),
-        document.getElementById('advancePaymentVehicle'),
-        document.getElementById('editAdvancePaymentVehicle')
-    ];
-
-    dropdowns.forEach(dropdown => {
-        while (dropdown.options.length > (dropdown.id === 'filterVehicle' ? 1 : 1)) dropdown.remove(1);
-
-        if (!vehiclesSnapshot.empty) {
-            vehiclesSnapshot.forEach(doc => {
-                const vehicle = doc.data();
-                const option = document.createElement('option');
-                option.value = doc.id;
-                option.textContent = `${vehicle.vehicleNumber} (${vehicle.vehicleSize}ft)`;
-                dropdown.appendChild(option);
-            });
-        }
+    document.querySelectorAll(`#${collectionName}Section .delete-btn`).forEach(button => {
+        button.addEventListener('click', (e) => handleDelete(e, collectionName));
     });
 }
 
-// Populate driver dropdowns
-function populateDriverDropdowns(driversSnapshot) {
-    const dropdowns = [
-        document.getElementById('hireDriver'),
-        document.getElementById('editHireDriver')
-    ];
+// Edit Handlers
+async function handleEdit(e, collectionName) {
+    const id = e.target.dataset.id;
+    const docRef = db.collection(collectionName).doc(id);
 
-    dropdowns.forEach(dropdown => {
-        while (dropdown.options.length > 1) dropdown.remove(1);
-
-        if (!driversSnapshot.empty) {
-            driversSnapshot.forEach(doc => {
-                const driver = doc.data();
-                const option = document.createElement('option');
-                option.value = doc.id;
-                option.textContent = `${driver.name} (${driver.licenseNumber})`;
-                dropdown.appendChild(option);
-            });
+    try {
+        const doc = await docRef.get();
+        if (!doc.exists) {
+            showMessage("Document not found.", 'error');
+            return;
         }
-    });
-}
 
-// Edit and Delete functionality
-document.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('delete-btn')) {
-        const id = e.target.getAttribute('data-id');
-        const table = e.target.closest('table').id;
+        const data = doc.data();
 
-        showConfirmation('Are you sure you want to delete this record?', async () => {
-            try {
-                let collectionName;
-                if (table === 'vehiclesTable') collectionName = 'vehicles';
-                else if (table === 'driversTable') collectionName = 'drivers';
-                else if (table === 'hiresTable') collectionName = 'hires';
-                else if (table === 'advancePaymentsTable') collectionName = 'advancePayments';
+        if (collectionName === 'vehicles') {
+            document.getElementById('editVehicleId').value = id;
+            document.getElementById('editVehicleNumber').value = data.vehicleNumber;
+            document.getElementById('editVehicleSize').value = data.vehicleSize;
+            document.getElementById('editMinimumHire').value = data.minimumHire;
+            document.getElementById('editTier1Price').value = data.tier1Price;
+            document.getElementById('editTier2Price').value = data.tier2Price;
+            document.getElementById('editTier3Price').value = data.tier3Price;
+            document.getElementById('editWaitingPrice1').value = data.waitingPrice1;
+            document.getElementById('editWaitingPrice2').value = data.waitingPrice2;
+            document.getElementById('editLoadingCharge').value = data.loadingCharge;
+            document.getElementById('editOwnership').value = data.ownership;
+            document.getElementById('editVehicleModal').style.display = 'block';
+        } else if (collectionName === 'drivers') {
+            document.getElementById('editDriverId').value = id;
+            document.getElementById('editDriverName').value = data.name;
+            document.getElementById('editLicenseNumber').value = data.licenseNumber;
+            document.getElementById('editDriverAge').value = data.age;
+            document.getElementById('editDriverAddress').value = data.address;
+            document.getElementById('editDriverModal').style.display = 'block';
+        } else if (collectionName === 'hires') {
+            document.getElementById('editHireId').value = id;
+            document.getElementById('editHireDate').value = data.hireDate;
+            document.getElementById('editHireMonth').value = data.month;
+            await populateEditHireVehicleDropdown(data.vehicleId);
+            document.getElementById('editFromLocation').value = data.fromLocation;
+            document.getElementById('editToLocation').value = data.toLocation;
+            document.getElementById('editDistance').value = data.distance;
+            document.getElementById('editFuelLiters').value = data.fuelLiters || '';
+            document.getElementById('editFuelPricePerLiter').value = data.fuelPricePerLiter || '';
+            document.getElementById('editWaitingHours').value = data.waitingHours || '';
+            document.getElementById('editLoading').checked = data.loading || false;
+            await populateEditHireDriverDropdown(data.driverId);
+            document.getElementById('editHireModal').style.display = 'block';
+        } else if (collectionName === 'advancePayments') {
+            document.getElementById('editAdvancePaymentId').value = id;
+            document.getElementById('editAdvancePaymentDate').value = data.date;
+            document.getElementById('editAdvancePaymentMonth').value = data.month;
+            await populateEditAdvancePaymentVehicleDropdown(data.vehicleId);
+            document.getElementById('editAdvancePaymentAmount').value = data.amount;
+            document.getElementById('editAdvancePaymentModal').style.display = 'block';
+        }
 
-                if (collectionName) {
-                    await db.collection(collectionName).doc(id).delete();
-                    showMessage('Record deleted successfully!', 'success');
-                }
-            } catch (error) {
-                console.error("Error deleting document:", error);
-                showMessage("Failed to delete record. Please check console for details.", 'error');
-            }
-        });
+    } catch (error) {
+        console.error("Error fetching document for edit:", error);
+        showMessage("Failed to load data for editing.", 'error');
     }
+}
 
-    if (e.target.classList.contains('edit-btn')) {
-        const id = e.target.getAttribute('data-id');
-        const table = e.target.closest('table').id;
-
+// Delete Handler
+function handleDelete(e, collectionName) {
+    const id = e.target.dataset.id;
+    showConfirmation(`Are you sure you want to delete this ${collectionName.slice(0, -1)} record?`, async () => {
         try {
-            if (table === 'vehiclesTable') {
-                const doc = await db.collection('vehicles').doc(id).get();
-                if (doc.exists) {
-                    const vehicle = doc.data();
-                    document.getElementById('editVehicleId').value = id;
-                    document.getElementById('editVehicleNumber').value = vehicle.vehicleNumber;
-                    document.getElementById('editVehicleSize').value = vehicle.vehicleSize;
-                    document.getElementById('editMinimumHire').value = vehicle.minimumHire;
-                    document.getElementById('editTier1Distance').value = vehicle.tier1Distance;
-                    document.getElementById('editTier1Price').value = vehicle.tier1Price;
-                    document.getElementById('editTier2Distance').value = vehicle.tier2Distance;
-                    document.getElementById('editTier2Price').value = vehicle.tier2Price;
-                    document.getElementById('editTier3Price').value = vehicle.tier3Price;
-                    document.getElementById('editOwnership').value = vehicle.ownership;
-                    document.getElementById('editVehicleModal').style.display = 'block';
-                }
-            }
-            else if (table === 'driversTable') {
-                const doc = await db.collection('drivers').doc(id).get();
-                if (doc.exists) {
-                    const driver = doc.data();
-                    document.getElementById('editDriverId').value = id;
-                    document.getElementById('editDriverName').value = driver.name;
-                    document.getElementById('editLicenseNumber').value = driver.licenseNumber;
-                    document.getElementById('editDriverAge').value = driver.age;
-                    document.getElementById('editDriverAddress').value = driver.address;
-                    document.getElementById('editDriverModal').style.display = 'block';
-                }
-            }
-            else if (table === 'hiresTable') {
-                const doc = await db.collection('hires').doc(id).get();
-                if (doc.exists) {
-                    const hire = doc.data();
-                    document.getElementById('editHireId').value = id;
-                    document.getElementById('editHireMonth').value = hire.month;
-                    document.getElementById('editFromLocation').value = hire.fromLocation;
-                    document.getElementById('editToLocation').value = hire.toLocation;
-                    document.getElementById('editDistance').value = hire.distance;
-                    document.getElementById('editHireDate').value = hire.hireDate;
-                    document.getElementById('editFuelLiters').value = hire.fuelLiters || '';
-                    document.getElementById('editFuelPricePerLiter').value = hire.fuelPricePerLiter || '';
-
-                    setTimeout(() => {
-                        document.getElementById('editHireVehicle').value = hire.vehicleId;
-                        if (hire.driverId) {
-                            document.getElementById('editHireDriver').value = hire.driverId;
-                        }
-                    }, 100);
-
-                    document.getElementById('editHireModal').style.display = 'block';
-                }
-            }
-            else if (table === 'advancePaymentsTable') {
-                const doc = await db.collection('advancePayments').doc(id).get();
-                if (doc.exists) {
-                    const ap = doc.data();
-                    document.getElementById('editAdvancePaymentId').value = id;
-                    document.getElementById('editAdvancePaymentDate').value = ap.date;
-                    document.getElementById('editAdvancePaymentMonth').value = ap.month;
-                    document.getElementById('editAdvancePaymentAmount').value = ap.amount;
-
-                    setTimeout(() => {
-                        document.getElementById('editAdvancePaymentVehicle').value = ap.vehicleId;
-                    }, 100);
-
-                    document.getElementById('editAdvancePaymentModal').style.display = 'block';
-                }
-            }
+            await db.collection(collectionName).doc(id).delete();
+            showMessage('Record deleted successfully!', 'success');
         } catch (error) {
-            console.error("Error loading document for editing:", error);
-            showMessage("Failed to load record for editing. Please check console for details.", 'error');
+            console.error("Error deleting document:", error);
+            showMessage("Failed to delete record.", 'error');
         }
-    }
-});
+    });
+}
 
-// Edit form submissions
+// Update forms
 document.getElementById('editVehicleForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const id = document.getElementById('editVehicleId').value;
     try {
-        const id = document.getElementById('editVehicleId').value;
-        const updates = {
+        const vehicle = {
             vehicleNumber: document.getElementById('editVehicleNumber').value,
             vehicleSize: parseFloat(document.getElementById('editVehicleSize').value),
             minimumHire: parseFloat(document.getElementById('editMinimumHire').value),
-            tier1Distance: parseFloat(document.getElementById('editTier1Distance').value),
             tier1Price: parseFloat(document.getElementById('editTier1Price').value),
-            tier2Distance: parseFloat(document.getElementById('editTier2Distance').value),
             tier2Price: parseFloat(document.getElementById('editTier2Price').value),
             tier3Price: parseFloat(document.getElementById('editTier3Price').value),
-            ownership: document.getElementById('editOwnership').value,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            waitingPrice1: parseFloat(document.getElementById('editWaitingPrice1').value),
+            waitingPrice2: parseFloat(document.getElementById('editWaitingPrice2').value),
+            loadingCharge: parseFloat(document.getElementById('editLoadingCharge').value),
+            ownership: document.getElementById('editOwnership').value
         };
-        await db.collection('vehicles').doc(id).update(updates);
+        await db.collection('vehicles').doc(id).update(vehicle);
         document.getElementById('editVehicleModal').style.display = 'none';
         showMessage('Vehicle updated successfully!', 'success');
     } catch (error) {
         console.error("Error updating vehicle:", error);
-        showMessage("Failed to update vehicle. Please check console for details.", 'error');
+        showMessage("Failed to update vehicle.", 'error');
     }
 });
 
 document.getElementById('editDriverForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const id = document.getElementById('editDriverId').value;
     try {
-        const id = document.getElementById('editDriverId').value;
-        const updates = {
+        const driver = {
             name: document.getElementById('editDriverName').value,
             licenseNumber: document.getElementById('editLicenseNumber').value,
             age: parseInt(document.getElementById('editDriverAge').value),
-            address: document.getElementById('editDriverAddress').value,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            address: document.getElementById('editDriverAddress').value
         };
-        await db.collection('drivers').doc(id).update(updates);
+        await db.collection('drivers').doc(id).update(driver);
         document.getElementById('editDriverModal').style.display = 'none';
         showMessage('Driver updated successfully!', 'success');
     } catch (error) {
         console.error("Error updating driver:", error);
-        showMessage("Failed to update driver. Please check console for details.", 'error');
+        showMessage("Failed to update driver.", 'error');
     }
 });
 
 document.getElementById('editHireForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const id = document.getElementById('editHireId').value;
     try {
-        const id = document.getElementById('editHireId').value;
         const vehicleId = document.getElementById('editHireVehicle').value;
-
         const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
         if (!vehicleDoc.exists) {
             throw new Error("Selected vehicle not found");
         }
-
         const vehicle = vehicleDoc.data();
         const distance = parseFloat(document.getElementById('editDistance').value);
-        
+
         // Calculate hire amount based on distance tiers
         let hireAmount = 0;
         if (distance <= vehicle.tier1Distance) {
@@ -716,485 +682,111 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
                         ((vehicle.tier2Distance - vehicle.tier1Distance) * vehicle.tier2Price) +
                         ((distance - vehicle.tier2Distance) * vehicle.tier3Price);
         }
-        
+
         // Apply minimum hire amount
         hireAmount = Math.max(hireAmount, vehicle.minimumHire);
 
-        const updates = {
+        // Waiting time calculation
+        const waitingHours = parseFloat(document.getElementById('editWaitingHours').value) || 0;
+        let waitingCost = 0;
+        if (waitingHours > 0) {
+            if (waitingHours <= 24) {
+                waitingCost = waitingHours * vehicle.waitingPrice1;
+            } else {
+                waitingCost = (24 * vehicle.waitingPrice1) + ((waitingHours - 24) * vehicle.waitingPrice2);
+            }
+        }
+
+        // Loading charge
+        const loadingCharge = document.getElementById('editLoading').checked ? vehicle.loadingCharge : 0;
+        
+        const hire = {
+            hireDate: document.getElementById('editHireDate').value,
+            month: document.getElementById('editHireMonth').value,
             vehicleId: vehicleId,
             vehicleNumber: vehicle.vehicleNumber,
-            month: document.getElementById('editHireMonth').value,
             fromLocation: document.getElementById('editFromLocation').value,
             toLocation: document.getElementById('editToLocation').value,
             distance: distance,
-            hireDate: document.getElementById('editHireDate').value,
             driverId: document.getElementById('editHireDriver').value || null,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            hireAmount: hireAmount,
-            pricingTiers: {
-                tier1Distance: vehicle.tier1Distance,
-                tier1Price: vehicle.tier1Price,
-                tier2Distance: vehicle.tier2Distance,
-                tier2Price: vehicle.tier2Price,
-                tier3Price: vehicle.tier3Price,
-                minimumHire: vehicle.minimumHire
-            }
+            hireAmount: hireAmount + waitingCost + loadingCharge,
+            waitingHours: waitingHours,
+            waitingCost: waitingCost,
+            loading: document.getElementById('editLoading').checked,
+            loadingCharge: loadingCharge
         };
 
         const fuelLiters = document.getElementById('editFuelLiters').value;
         const fuelPricePerLiter = document.getElementById('editFuelPricePerLiter').value;
 
         if (fuelLiters) {
-            updates.fuelLiters = parseFloat(fuelLiters);
-        } else {
-            updates.fuelLiters = firebase.firestore.FieldValue.delete();
+            hire.fuelLiters = parseFloat(fuelLiters);
         }
-
         if (fuelPricePerLiter) {
-            updates.fuelPricePerLiter = parseFloat(fuelPricePerLiter);
-        } else {
-            updates.fuelPricePerLiter = firebase.firestore.FieldValue.delete();
+            hire.fuelPricePerLiter = parseFloat(fuelPricePerLiter);
         }
-
         if (fuelLiters && fuelPricePerLiter) {
-            updates.fuelCost = updates.fuelLiters * updates.fuelPricePerLiter;
-        } else {
-            updates.fuelCost = firebase.firestore.FieldValue.delete();
+            hire.fuelCost = hire.fuelLiters * hire.fuelPricePerLiter;
         }
 
-        await db.collection('hires').doc(id).update(updates);
+        await db.collection('hires').doc(id).update(hire);
         document.getElementById('editHireModal').style.display = 'none';
         showMessage('Hire record updated successfully!', 'success');
     } catch (error) {
-        console.error("Error updating hire:", error);
-        showMessage("Failed to update hire record. Please check console for details.", 'error');
+        console.error("Error updating hire record:", error);
+        showMessage("Failed to update hire record.", 'error');
     }
 });
 
 document.getElementById('editAdvancePaymentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const id = document.getElementById('editAdvancePaymentId').value;
     try {
-        const id = document.getElementById('editAdvancePaymentId').value;
         const vehicleId = document.getElementById('editAdvancePaymentVehicle').value;
         const vehicleDoc = await db.collection('vehicles').doc(vehicleId).get();
-
         if (!vehicleDoc.exists) {
             throw new Error("Selected vehicle not found");
         }
-
-        const updates = {
+        const advancePayment = {
             date: document.getElementById('editAdvancePaymentDate').value,
             month: document.getElementById('editAdvancePaymentMonth').value,
             vehicleId: vehicleId,
             vehicleNumber: vehicleDoc.data().vehicleNumber,
-            amount: parseFloat(document.getElementById('editAdvancePaymentAmount').value),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            amount: parseFloat(document.getElementById('editAdvancePaymentAmount').value)
         };
-        await db.collection('advancePayments').doc(id).update(updates);
+        await db.collection('advancePayments').doc(id).update(advancePayment);
         document.getElementById('editAdvancePaymentModal').style.display = 'none';
         showMessage('Advance payment updated successfully!', 'success');
     } catch (error) {
         console.error("Error updating advance payment:", error);
-        showMessage("Failed to update advance payment. Please check console for details.", 'error');
+        showMessage("Failed to update advance payment.", 'error');
     }
 });
 
-// Filter functionality
-document.getElementById('applyFilter').addEventListener('click', async () => {
-    try {
-        const month = document.getElementById('filterMonth').value;
-        const vehicle = document.getElementById('filterVehicle').value;
-
-        let query = db.collection('hires');
-        let advancePaymentsQuery = db.collection('advancePayments');
-
-        if (month !== 'All') {
-            query = query.where('month', '==', month);
-            advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
-        }
-        if (vehicle !== 'All') {
-            query = query.where('vehicleId', '==', vehicle);
-            advancePaymentsQuery = advancePaymentsQuery.where('vehicleId', '==', vehicle);
-        }
-
-        query = query.orderBy('createdAt');
-        
-        const [hiresSnapshot, advancePaymentsSnapshot] = await Promise.all([
-            query.get(),
-            advancePaymentsQuery.get()
-        ]);
-
-        const hiresList = document.getElementById('hiresList');
-        hiresList.innerHTML = '';
-        let totalFuel = 0;
-        let totalHire = 0;
-        let totalDistance = 0;
-        let totalAdvancePayments = 0;
-
-        if (hiresSnapshot.empty) {
-            hiresList.innerHTML = '<tr><td colspan="12">No hire records found for selected filter</td></tr>';
-            updateTotals(0, 0, 0, 0);
-            return;
-        }
-
-        const driversSnapshot = await db.collection('drivers').get();
-        const drivers = {};
-        driversSnapshot.forEach(doc => {
-            drivers[doc.id] = doc.data().name;
-        });
-
-        advancePaymentsSnapshot.forEach(doc => {
-            totalAdvancePayments += doc.data().amount;
-        });
-
-        hiresSnapshot.forEach(doc => {
-            const hire = doc.data();
-            totalHire += hire.hireAmount || 0;
-            totalDistance += hire.distance || 0;
-
-            if (hire.fuelCost) {
-                totalFuel += hire.fuelCost;
-            }
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${hire.hireDate}</td>
-                <td>${hire.vehicleNumber}</td>
-                <td>${hire.fromLocation}</td>
-                <td>${hire.toLocation}</td>
-                <td>${hire.distance.toFixed(1)}</td>
-                <td>${hire.fuelLiters ? hire.fuelLiters.toFixed(1) : '-'}</td>
-                <td>${hire.fuelPricePerLiter ? hire.fuelPricePerLiter.toFixed(2) : '-'}</td>
-                <td>${hire.fuelCost ? hire.fuelCost.toFixed(2) : '-'}</td>
-                <td>${hire.pricingTiers ? 'Tiered Pricing' : '-'}</td>
-                <td>${hire.hireAmount.toFixed(2)}</td>
-                <td>${hire.driverId ? (drivers[hire.driverId] || 'N/A') : 'N/A'}</td>
-                <td>
-                    <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
-                    <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
-                </td>
-            `;
-            hiresList.appendChild(tr);
-        });
-
-        updateTotals(totalFuel, totalHire, totalDistance, totalAdvancePayments);
-    } catch (error) {
-        console.error("Error filtering hires:", error);
-        document.getElementById('hiresList').innerHTML = '<tr><td colspan="12">Error filtering hire records</td></tr>';
-        updateTotals(0, 0, 0, 0);
-        showMessage("Error filtering records. Please check console for details.", 'error');
-    }
-});
-
-// PDF Export Functionality
-function exportHiresToPDF() {
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        const month = document.getElementById('filterMonth').value;
-        const vehicleId = document.getElementById('filterVehicle').value;
-
-        let vehicleName = "All Vehicles";
-        if (vehicleId !== "All") {
-            const vehicleSelect = document.getElementById('filterVehicle');
-            const selectedOption = vehicleSelect.options[vehicleSelect.selectedIndex];
-            vehicleName = selectedOption.text;
-        }
-
-        const logoUrl = 'https://i.postimg.cc/jSbPKGXw/PDF-logo.png';
-
-        const img = new Image();
-        img.src = logoUrl;
-        img.onload = async function() {
-            const imgWidth = 30;
-            const imgHeight = 30;
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const x = (pageWidth - imgWidth) / 2;
-            doc.addImage(img, 'PNG', x, 10, imgWidth, imgHeight);
-
-            doc.setFontSize(20);
-            doc.setTextColor(231, 76, 60);
-            doc.text('JAYASOORIYA TRANSPORT', pageWidth / 2, 50, { align: 'center' });
-            doc.setFontSize(14);
-            doc.setTextColor(0, 0, 0);
-            doc.text('Vehicle Hire Report', pageWidth / 2, 60, { align: 'center' });
-
-            doc.setFontSize(12);
-            doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 70);
-            doc.text(`Vehicle: ${vehicleName}`, 15, 77);
-
-            const today = new Date();
-            doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 84);
-
-            const hiresTable = document.getElementById('hiresTable');
-            const rows = hiresTable.querySelectorAll('tbody tr');
-
-            if (rows.length === 0) {
-                doc.setFontSize(12);
-                doc.text('No hire records found for selected filter', 15, 100);
-            } else {
-                const tableData = [];
-                tableData.push([
-                    'Date', 'Vehicle', 'From', 'To', 'Distance',
-                    'Fuel (L)', 'Fuel Price/L', 'Fuel Cost', 'Pricing',
-                    'Hire Amount', 'Driver'
-                ]);
-
-                rows.forEach(row => {
-                    const cells = row.querySelectorAll('td');
-                    const rowData = [];
-                    for (let i = 0; i < cells.length - 1; i++) {
-                        rowData.push(cells[i].textContent.trim());
-                    }
-                    tableData.push(rowData);
-                });
-
-                doc.autoTable({
-                    startY: 95,
-                    head: [tableData[0]],
-                    body: tableData.slice(1),
-                    theme: 'grid',
-                    headStyles: {
-                        fillColor: [231, 76, 60],
-                        textColor: [255, 255, 255]
-                    },
-                    alternateRowStyles: {
-                        fillColor: [245, 245, 245]
-                    },
-                    styles: {
-                        fontSize: 8,
-                        cellPadding: 3
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 15 }, 1: { cellWidth: 20 }, 2: { cellWidth: 20 },
-                        3: { cellWidth: 20 }, 4: { cellWidth: 15 }, 5: { cellWidth: 12 },
-                        6: { cellWidth: 15 }, 7: { cellWidth: 15 }, 8: { cellWidth: 15 },
-                        9: { cellWidth: 20 }, 10: { cellWidth: 25 }
-                    }
-                });
-
-                const totalFuel = document.getElementById('totalFuelCost').textContent;
-                const totalHire = document.getElementById('totalHireAmount').textContent;
-                const netProfit = document.getElementById('netProfit').textContent;
-                const totalDistance = document.getElementById('totalDistance').textContent;
-
-                let advancePaymentsQuery = db.collection('advancePayments');
-                if (month !== 'All') {
-                    advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
-                }
-                if (vehicleId !== 'All') {
-                    advancePaymentsQuery = advancePaymentsQuery.where('vehicleId', '==', vehicleId);
-                }
-                const advancePaymentsSnapshot = await advancePaymentsQuery.get();
-                let filteredAdvancePaymentsTotal = 0;
-                advancePaymentsSnapshot.forEach(doc => {
-                    filteredAdvancePaymentsTotal += doc.data().amount;
-                });
-
-                let finalY = doc.lastAutoTable.finalY + 10;
-
-                const textHeight = 7 * 5;
-                if (finalY + textHeight > doc.internal.pageSize.getHeight() - 20) {
-                    doc.addPage();
-                    finalY = 20;
-                }
-
-                doc.setFontSize(10);
-                doc.setTextColor(0, 0, 0);
-                doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY);
-                doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY + 7);
-                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 14);
-                doc.text(`Total Advance Payments: LKR ${filteredAdvancePaymentsTotal.toFixed(2)}`, 15, finalY + 21);
-                doc.setFontSize(12);
-                doc.setTextColor(231, 76, 60);
-                doc.text(`Net Profit (After Advances): LKR ${netProfit}`, 15, finalY + 31);
-
-                finalY = finalY + 44;
-                if (finalY > doc.internal.pageSize.getHeight() - 20) {
-                    doc.addPage();
-                    finalY = 20;
-                }
-                doc.setFontSize(10);
-                doc.setTextColor(100, 100, 100);
-                doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
-            }
-
-            doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
-            showMessage('PDF exported successfully!', 'success');
-        };
-
-        img.onerror = async function() {
-            console.warn("Logo failed to load, generating PDF without it");
-
-            const pageWidth = doc.internal.pageSize.getWidth();
-            doc.setFontSize(20);
-            doc.setTextColor(231, 76, 60);
-            doc.text('JAYASOORIYA ENTERPRISES', pageWidth / 2, 20, { align: 'center' });
-            doc.setFontSize(14);
-            doc.setTextColor(0, 0, 0);
-            doc.text('Vehicle Hire Report', pageWidth / 2, 30, { align: 'center' });
-
-            doc.setFontSize(12);
-            doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, 15, 40);
-            doc.text(`Vehicle: ${vehicleName}`, 15, 47);
-
-            const today = new Date();
-            doc.text(`Report Date: ${today.toLocaleDateString()}`, 15, 54);
-
-            const hiresTable = document.getElementById('hiresTable');
-            const rows = hiresTable.querySelectorAll('tbody tr');
-
-            if (rows.length === 0) {
-                doc.setFontSize(12);
-                doc.text('No hire records found for selected filter', 15, 70);
-            } else {
-                const tableData = [];
-                tableData.push([
-                    'Date', 'Vehicle', 'From', 'To', 'Distance',
-                    'Fuel (L)', 'Fuel Price/L', 'Fuel Cost', 'Pricing',
-                    'Hire Amount', 'Driver'
-                ]);
-
-                rows.forEach(row => {
-                    const cells = row.querySelectorAll('td');
-                    const rowData = [];
-                    for (let i = 0; i < cells.length - 1; i++) {
-                        rowData.push(cells[i].textContent.trim());
-                    }
-                    tableData.push(rowData);
-                });
-
-                doc.autoTable({
-                    startY: 70,
-                    head: [tableData[0]],
-                    body: tableData.slice(1),
-                    theme: 'grid',
-                    headStyles: {
-                        fillColor: [231, 76, 60],
-                        textColor: [255, 255, 255]
-                    },
-                    alternateRowStyles: {
-                        fillColor: [245, 245, 245]
-                    },
-                    styles: {
-                        fontSize: 8,
-                        cellPadding: 3
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 15 }, 1: { cellWidth: 20 }, 2: { cellWidth: 20 },
-                        3: { cellWidth: 20 }, 4: { cellWidth: 15 }, 5: { cellWidth: 12 },
-                        6: { cellWidth: 15 }, 7: { cellWidth: 15 }, 8: { cellWidth: 15 },
-                        9: { cellWidth: 20 }, 10: { cellWidth: 25 }
-                    }
-                });
-
-                const totalFuel = document.getElementById('totalFuelCost').textContent;
-                const totalHire = document.getElementById('totalHireAmount').textContent;
-                const netProfit = document.getElementById('netProfit').textContent;
-                const totalDistance = document.getElementById('totalDistance').textContent;
-
-                let advancePaymentsQuery = db.collection('advancePayments');
-                if (month !== 'All') {
-                    advancePaymentsQuery = advancePaymentsQuery.where('month', '==', month);
-                }
-                if (vehicleId !== 'All') {
-                    advancePaymentsQuery = advancePaymentsQuery.where('vehicleId', '==', vehicleId);
-                }
-                const advancePaymentsSnapshot = await advancePaymentsQuery.get();
-                let filteredAdvancePaymentsTotal = 0;
-                advancePaymentsSnapshot.forEach(doc => {
-                    filteredAdvancePaymentsTotal += doc.data().amount;
-                });
-
-                let finalY = doc.lastAutoTable.finalY + 10;
-
-                const textHeight = 7 * 5;
-                if (finalY + textHeight > doc.internal.pageSize.getHeight() - 20) {
-                    doc.addPage();
-                    finalY = 20;
-                }
-
-                doc.setFontSize(10);
-                doc.setTextColor(0, 0, 0);
-                doc.text(`Total Distance: ${totalDistance} KM`, 15, finalY);
-                doc.text(`Total Fuel Cost: LKR ${totalFuel}`, 15, finalY + 7);
-                doc.text(`Total Hire Amount: LKR ${totalHire}`, 15, finalY + 14);
-                doc.text(`Total Advance Payments: LKR ${filteredAdvancePaymentsTotal.toFixed(2)}`, 15, finalY + 21);
-                doc.setFontSize(12);
-                doc.setTextColor(231, 76, 60);
-                doc.text(`Net Profit (After Advances): LKR ${netProfit}`, 15, finalY + 31);
-
-                finalY = finalY + 44;
-                if (finalY > doc.internal.pageSize.getHeight() - 20) {
-                    doc.addPage();
-                    finalY = 20;
-                }
-                doc.setFontSize(10);
-                doc.setTextColor(100, 100, 100);
-                doc.text('This is a system-generated report, no signature is required.', pageWidth / 2, finalY, { align: 'center' });
-            }
-
-            doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
-            showMessage('PDF exported successfully!', 'success');
-        };
-    } catch (error) {
-        console.error("Error generating PDF:", error);
-        showMessage("Failed to generate PDF. Please check console for details.", 'error');
-    }
-}
-
-// Custom message box and confirmation dialog
-function showMessage(message, type) {
-    let messageBox = document.getElementById('messageBox');
-    if (!messageBox) {
-        messageBox = document.createElement('div');
-        messageBox.id = 'messageBox';
-        messageBox.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            color: white;
-            z-index: 1001;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-        `;
-        document.body.appendChild(messageBox);
-    }
-
-    messageBox.textContent = message;
-    if (type === 'success') {
-        messageBox.style.backgroundColor = '#27ae60';
-    } else if (type === 'error') {
-        messageBox.style.backgroundColor = '#e74c3c';
-    } else {
-        messageBox.style.backgroundColor = '#3498db';
-    }
-
-    messageBox.style.opacity = '1';
+// Helper Functions
+function showMessage(message, type = 'success') {
+    const msgBox = document.getElementById('messageBox');
+    const msgText = document.getElementById('messageText');
+    msgText.textContent = message;
+    msgBox.className = `message-box ${type}`;
+    msgBox.style.display = 'block';
     setTimeout(() => {
-        messageBox.style.opacity = '0';
-    }, 3000);
+        msgBox.style.display = 'none';
+    }, 5000);
 }
 
+// Confirmation modal
 function showConfirmation(message, onConfirm) {
-    let confirmationModal = document.getElementById('confirmationModal');
+    const confirmationModal = document.getElementById('confirmationModal');
     if (!confirmationModal) {
-        confirmationModal = document.createElement('div');
+        const confirmationModal = document.createElement('div');
         confirmationModal.id = 'confirmationModal';
-        confirmationModal.classList.add('modal');
+        confirmationModal.className = 'modal';
         confirmationModal.innerHTML = `
             <div class="modal-content">
                 <p id="confirmationMessage"></p>
-                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
-                    <button id="confirmYes" class="action-btn edit-btn" style="background-color: #27ae60; color: white;">Yes</button>
-                    <button id="confirmNo" class="action-btn delete-btn" style="background-color: #e74c3c; color: white;">No</button>
-                </div>
+                <button id="confirmYes">Yes</button>
+                <button id="confirmNo">No</button>
             </div>
         `;
         document.body.appendChild(confirmationModal);
@@ -1232,6 +824,495 @@ window.addEventListener('click', (e) => {
     }
 });
 
+// Update total sections
+function updateTotals(totalDistance, totalFuel, totalHire, totalWaiting, totalLoading, totalAdvancePayments) {
+    document.getElementById('totalDistance').textContent = totalDistance.toFixed(2);
+    document.getElementById('totalFuelCost').textContent = totalFuel.toFixed(2);
+    document.getElementById('totalWaitingCost').textContent = totalWaiting.toFixed(2);
+    
+    const totalIncome = totalHire;
+    const netIncome = totalIncome - totalFuel - totalAdvancePayments;
+    document.getElementById('netIncome').textContent = netIncome.toFixed(2);
+}
+
+// Filter functionality
+document.getElementById('applyFilter').addEventListener('click', filterHires);
+async function filterHires() {
+    try {
+        const month = document.getElementById('filterMonth').value;
+        const vehicleId = document.getElementById('filterVehicle').value;
+
+        let query = db.collection('hires').orderBy('createdAt');
+        if (month !== 'All') {
+            query = query.where('month', '==', month);
+        }
+        if (vehicleId !== 'All') {
+            query = query.where('vehicleId', '==', vehicleId);
+        }
+
+        const hiresSnapshot = await query.get();
+        const hiresList = document.getElementById('hiresList');
+        hiresList.innerHTML = '';
+
+        let totalFuel = 0;
+        let totalHire = 0;
+        let totalDistance = 0;
+        let totalWaiting = 0;
+        let totalLoading = 0;
+        let totalAdvancePayments = 0;
+
+        if (hiresSnapshot.empty) {
+            hiresList.innerHTML = '<tr><td colspan="15">No hire records found for selected filters</td></tr>';
+            updateTotals(0, 0, 0, 0, 0, 0);
+            return;
+        }
+
+        const driversSnapshot = await db.collection('drivers').get();
+        const drivers = {};
+        driversSnapshot.forEach(doc => {
+            drivers[doc.id] = doc.data().name;
+        });
+
+        const advancePaymentsSnapshot = await db.collection('advancePayments').get();
+        const advancePaymentsByMonthAndVehicle = {};
+        advancePaymentsSnapshot.forEach(doc => {
+            const ap = doc.data();
+            const key = `${ap.month}-${ap.vehicleId}`;
+            advancePaymentsByMonthAndVehicle[key] = (advancePaymentsByMonthAndVehicle[key] || 0) + ap.amount;
+        });
+
+        hiresSnapshot.forEach(doc => {
+            const hire = doc.data();
+            const driverName = hire.driverId ? drivers[hire.driverId] || 'N/A' : 'N/A';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center">${hire.hireDate}</td>
+                <td class="text-center">${hire.vehicleNumber}</td>
+                <td class="text-center">${hire.fromLocation}</td>
+                <td class="text-center">${hire.toLocation}</td>
+                <td class="text-center">${hire.distance.toFixed(2)}</td>
+                <td class="text-center">${hire.fuelLiters ? hire.fuelLiters.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.fuelPricePerLiter ? hire.fuelPricePerLiter.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.fuelCost ? hire.fuelCost.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.waitingHours ? hire.waitingHours.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.waitingCost ? hire.waitingCost.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.loading ? 'Yes' : 'No'}</td>
+                <td class="text-center">${hire.loadingCharge ? hire.loadingCharge.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.hireAmount.toFixed(2)}</td>
+                <td class="text-center">${driverName}</td>
+                <td class="text-center">
+                    <button class="action-btn edit-btn" data-id="${doc.id}">Edit</button>
+                    <button class="action-btn delete-btn" data-id="${doc.id}">Delete</button>
+                </td>
+            `;
+            hiresList.appendChild(tr);
+
+            totalDistance += hire.distance;
+            totalFuel += hire.fuelCost || 0;
+            totalHire += hire.hireAmount;
+            totalWaiting += hire.waitingCost || 0;
+            totalLoading += hire.loadingCharge || 0;
+        });
+
+        // Calculate filtered advance payments
+        const currentMonth = document.getElementById('filterMonth').value;
+        const currentVehicleId = document.getElementById('filterVehicle').value;
+        
+        if (currentMonth !== 'All' && currentVehicleId !== 'All') {
+            const key = `${currentMonth}-${currentVehicleId}`;
+            totalAdvancePayments = advancePaymentsByMonthAndVehicle[key] || 0;
+        } else if (currentMonth !== 'All' && currentVehicleId === 'All') {
+            totalAdvancePayments = Object.keys(advancePaymentsByMonthAndVehicle)
+                .filter(key => key.startsWith(currentMonth))
+                .reduce((sum, key) => sum + advancePaymentsByMonthAndVehicle[key], 0);
+        } else if (currentMonth === 'All' && currentVehicleId !== 'All') {
+            totalAdvancePayments = Object.keys(advancePaymentsByMonthAndVehicle)
+                .filter(key => key.endsWith(vehicleId))
+                .reduce((sum, key) => sum + advancePaymentsByMonthAndVehicle[key], 0);
+        } else {
+            totalAdvancePayments = Object.values(advancePaymentsByMonthAndVehicle)
+                .reduce((sum, amount) => sum + amount, 0);
+        }
+
+        updateTotals(totalDistance, totalFuel, totalHire, totalWaiting, totalLoading, totalAdvancePayments);
+        setupActionListeners('hires');
+
+    } catch (error) {
+        console.error("Error filtering hires:", error);
+        showMessage("Failed to filter records. Please check console for details.", 'error');
+    }
+}
+
+// PDF Export
+document.getElementById('exportPdfBtn').addEventListener('click', exportPdf);
+
+async function exportPdf() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('landscape');
+
+        const month = document.getElementById('filterMonth').value;
+        const vehicleId = document.getElementById('filterVehicle').value;
+
+        let vehicleName = "All Vehicles";
+        if (vehicleId !== "All") {
+            const vehicleSelect = document.getElementById('filterVehicle');
+            const selectedOption = vehicleSelect.options[vehicleSelect.selectedIndex];
+            vehicleName = selectedOption.text;
+        }
+
+        const logoUrl = 'https://i.postimg.cc/jSbPKGXw/PDF-logo.png';
+        
+        // Asynchronously load the logo
+        const img = new Image();
+        img.src = logoUrl;
+
+        img.onload = async function() {
+            await generatePdfContent(doc, img, month, vehicleId, vehicleName);
+        };
+
+        img.onerror = async function() {
+            await generatePdfContent(doc, null, month, vehicleId, vehicleName);
+        };
+        
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        showMessage("Failed to generate PDF. Please check console for details.", 'error');
+    }
+}
+
+async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 10; // Reduced margin for more space
+    let yOffset = 10;
+
+    // Add logo if available
+    if (logoImg) {
+        const imgWidth = 30;
+        const imgHeight = 30;
+        const x = (pageWidth - imgWidth) / 2;
+        doc.addImage(logoImg, 'PNG', x, yOffset, imgWidth, imgHeight);
+        yOffset += imgHeight + 5;
+    }
+
+    // Header text
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(231, 76, 60); // Red color
+    doc.text('JAYASOORIYA TRANSPORT', pageWidth / 2, yOffset, { align: 'center' });
+    yOffset += 8;
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0); // Black color
+    doc.text('Vehicle Hire Report', pageWidth / 2, yOffset, { align: 'center' });
+    yOffset += 8;
+
+    // Filter information
+    doc.setFontSize(10);
+    doc.text(`Month: ${month === 'All' ? 'All Months' : month}`, margin, yOffset);
+    doc.text(`Vehicle: ${vehicleName}`, pageWidth - margin, yOffset, { align: 'right' });
+    yOffset += 7;
+    
+    const today = new Date();
+    doc.text(`Report Date: ${today.toLocaleDateString()}`, margin, yOffset);
+    yOffset += 10;
+
+    // Fetch data from Firestore
+    let query = db.collection('hires').orderBy('createdAt');
+    if (month !== 'All') {
+        query = query.where('month', '==', month);
+    }
+    if (vehicleId !== 'All') {
+        query = query.where('vehicleId', '==', vehicleId);
+    }
+
+    const hiresSnapshot = await query.get();
+    const driversSnapshot = await db.collection('drivers').get();
+    const drivers = {};
+    driversSnapshot.forEach(doc => {
+        drivers[doc.id] = doc.data().name;
+    });
+
+    // Prepare data for the table
+    const rows = [];
+    let totalDistance = 0;
+    let totalFuel = 0;
+    let totalHire = 0;
+    let totalWaiting = 0;
+    let totalLoading = 0;
+
+    hiresSnapshot.forEach(doc => {
+        const hire = doc.data();
+        const driverName = hire.driverId ? drivers[hire.driverId] || 'N/A' : 'N/A';
+        rows.push([
+            hire.hireDate,
+            hire.vehicleNumber,
+            hire.fromLocation,
+            hire.toLocation,
+            hire.distance.toFixed(2),
+            hire.fuelLiters ? hire.fuelLiters.toFixed(2) : '0.00',
+            hire.fuelPricePerLiter ? hire.fuelPricePerLiter.toFixed(2) : '0.00',
+            hire.fuelCost ? hire.fuelCost.toFixed(2) : '0.00',
+            hire.waitingHours ? hire.waitingHours.toFixed(2) : '0.00',
+            hire.waitingCost ? hire.waitingCost.toFixed(2) : '0.00',
+            hire.loading ? 'Yes' : 'No',
+            hire.loadingCharge ? hire.loadingCharge.toFixed(2) : '0.00',
+            hire.hireAmount.toFixed(2),
+            driverName
+        ]);
+        
+        // Update totals
+        totalDistance += hire.distance;
+        totalFuel += hire.fuelCost || 0;
+        totalHire += hire.hireAmount;
+        totalWaiting += hire.waitingCost || 0;
+        totalLoading += hire.loadingCharge || 0;
+    });
+
+    if (hiresSnapshot.empty) {
+        doc.setFontSize(10);
+        doc.text('No hire records found for selected filter', margin, yOffset);
+    } else {
+        // Define column headers
+        const headers = [
+            ['Date', 'Vehicle', 'From', 'To', 'Distance', 'Fuel (L)', 'Fuel Price', 'Fuel Cost', 
+             'Waiting (Hrs)', 'Waiting Cost', 'Loading', 'Loading Charge', 'Hire Amount', 'Driver']
+        ];
+        
+        // Calculate column widths to maximize space
+        const availableWidth = pageWidth - (margin * 2);
+        const columnStyles = {
+            0: { cellWidth: 20 },  // Date
+            1: { cellWidth: 20 },  // Vehicle
+            2: { cellWidth: 25 },  // From
+            3: { cellWidth: 25 },  // To
+            4: { cellWidth: 18 },  // Distance
+            5: { cellWidth: 12 },  // Fuel (L)
+            6: { cellWidth: 15 },  // Fuel Price
+            7: { cellWidth: 18 },  // Fuel Cost
+            8: { cellWidth: 18 },  // Waiting (Hrs)
+            9: { cellWidth: 20 },  // Waiting Cost
+            10: { cellWidth: 18 }, // Loading
+            11: { cellWidth: 20 }, // Loading Charge
+            12: { cellWidth: 20 }, // Hire Amount
+            13: { cellWidth: 28 }  // Driver
+        };
+
+        // Create the table with full width
+        doc.autoTable({
+            startY: yOffset + 5,
+            head: headers,
+            body: rows,
+            theme: 'grid',
+            margin: { left: margin, right: margin },
+            tableWidth: 'wrap',
+            styles: {
+                overflow: 'linebreak',
+                cellPadding: 2,
+                fontSize: 7,
+                valign: 'middle'
+            },
+            headStyles: {
+                fillColor: [231, 76, 60], // Red header
+                textColor: [255, 255, 255], // White text
+                fontSize: 8,
+                halign: 'center',
+                cellPadding: 3
+            },
+            bodyStyles: {
+                fontSize: 7,
+                cellPadding: 2,
+                overflow: 'linebreak',
+                halign: 'center'
+            },
+            alternateRowStyles: {
+                fillColor: [245, 245, 245] // Light gray for alternate rows
+            },
+            columnStyles: columnStyles,
+            didDrawPage: function(data) {
+                // Add page numbers
+                const pageCount = doc.internal.getNumberOfPages();
+                doc.setFontSize(8);
+                doc.text(`Page ${data.pageNumber} of ${pageCount}`, 
+                        pageWidth / 2, 
+                        pageHeight - 10, 
+                        { align: 'center' });
+            }
+        });
+        
+        // Get the final Y position after the table
+        yOffset = doc.autoTable.previous.finalY + 10;
+
+        // Check if we need a new page for the totals
+        if (yOffset + 50 > pageHeight - 20) {
+            doc.addPage('landscape');
+            yOffset = 20;
+        }
+
+        // Calculate total advance payments
+        const advancePaymentsSnapshot = await db.collection('advancePayments').get();
+        const advancePaymentsByMonthAndVehicle = {};
+        advancePaymentsSnapshot.forEach(doc => {
+            const ap = doc.data();
+            const key = `${ap.month}-${ap.vehicleId}`;
+            advancePaymentsByMonthAndVehicle[key] = (advancePaymentsByMonthAndVehicle[key] || 0) + ap.amount;
+        });
+
+        let totalAdvancePayments = 0;
+        if (month !== 'All' && vehicleId !== 'All') {
+            const key = `${month}-${vehicleId}`;
+            totalAdvancePayments = advancePaymentsByMonthAndVehicle[key] || 0;
+        } else if (month !== 'All' && vehicleId === 'All') {
+            totalAdvancePayments = Object.keys(advancePaymentsByMonthAndVehicle)
+                .filter(key => key.startsWith(month))
+                .reduce((sum, key) => sum + advancePaymentsByMonthAndVehicle[key], 0);
+        } else if (month === 'All' && vehicleId !== 'All') {
+            totalAdvancePayments = Object.keys(advancePaymentsByMonthAndVehicle)
+                .filter(key => key.endsWith(vehicleId))
+                .reduce((sum, key) => sum + advancePaymentsByMonthAndVehicle[key], 0);
+        } else {
+            totalAdvancePayments = Object.values(advancePaymentsByMonthAndVehicle)
+                .reduce((sum, amount) => sum + amount, 0);
+        }
+
+        const netProfit = totalHire - totalFuel - totalAdvancePayments;
+
+        // Add totals section with better layout
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        
+        // First row of totals
+        doc.text(`Total Distance: ${totalDistance.toFixed(2)} KM`, margin, yOffset);
+        doc.text(`Total Fuel Cost: LKR ${totalFuel.toFixed(2)}`, margin + 70, yOffset);
+        doc.text(`Total Waiting Cost: LKR ${totalWaiting.toFixed(2)}`, margin + 140, yOffset);
+        yOffset += 7;
+        
+        // Second row of totals
+        doc.text(`Total Loading Charges: LKR ${totalLoading.toFixed(2)}`, margin, yOffset);
+        doc.text(`Total Hire Amount: LKR ${totalHire.toFixed(2)}`, margin + 70, yOffset);
+        doc.text(`Total Advance Payments: LKR ${totalAdvancePayments.toFixed(2)}`, margin + 140, yOffset);
+        yOffset += 10;
+        
+        // Add net profit with emphasis
+        doc.setFontSize(12);
+        doc.setTextColor(231, 76, 60); // Red color
+        doc.text(`Net Profit (After Advances): LKR ${netProfit.toFixed(2)}`, margin, yOffset);
+        yOffset += 15;
+
+        // Add footer note
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text('This is a system-generated report, no signature is required.', 
+                pageWidth / 2, 
+                yOffset, 
+                { align: 'center' });
+    }
+
+    // Save the PDF
+    doc.save(`Hire_Report_${month === 'All' ? 'All_Months' : month}_${vehicleName.replace(/ /g, '_')}.pdf`);
+    showMessage('PDF exported successfully!', 'success');
+}
+
+// Dropdown population
+async function populateVehicleDropdowns(snapshot) {
+    const hireVehicle = document.getElementById('hireVehicle');
+    const editHireVehicle = document.getElementById('editHireVehicle');
+    const filterVehicle = document.getElementById('filterVehicle');
+    const advancePaymentVehicle = document.getElementById('advancePaymentVehicle');
+    const editAdvancePaymentVehicle = document.getElementById('editAdvancePaymentVehicle');
+    
+    // Clear existing options, keep the default one
+    const dropdowns = [hireVehicle, editHireVehicle, filterVehicle, advancePaymentVehicle, editAdvancePaymentVehicle];
+    dropdowns.forEach(dropdown => {
+        let options = Array.from(dropdown.options);
+        options.filter(opt => opt.value !== '').forEach(opt => opt.remove());
+    });
+
+    if (snapshot.empty) return;
+
+    snapshot.forEach(doc => {
+        const vehicle = doc.data();
+        const option = new Option(vehicle.vehicleNumber, doc.id);
+        
+        hireVehicle.add(option.cloneNode(true));
+        editHireVehicle.add(option.cloneNode(true));
+        filterVehicle.add(option.cloneNode(true));
+        advancePaymentVehicle.add(option.cloneNode(true));
+        editAdvancePaymentVehicle.add(option.cloneNode(true));
+    });
+}
+
+async function populateDriverDropdowns(snapshot) {
+    const hireDriver = document.getElementById('hireDriver');
+    const editHireDriver = document.getElementById('editHireDriver');
+
+    // Clear existing options, keep the default one
+    const dropdowns = [hireDriver, editHireDriver];
+    dropdowns.forEach(dropdown => {
+        let options = Array.from(dropdown.options);
+        options.filter(opt => opt.value !== '').forEach(opt => opt.remove());
+    });
+    
+    if (snapshot.empty) return;
+
+    snapshot.forEach(doc => {
+        const driver = doc.data();
+        const option = new Option(driver.name, doc.id);
+        
+        hireDriver.add(option.cloneNode(true));
+        editHireDriver.add(option.cloneNode(true));
+    });
+}
+
+async function populateEditHireVehicleDropdown(selectedId) {
+    const dropdown = document.getElementById('editHireVehicle');
+    const vehiclesSnapshot = await db.collection('vehicles').get();
+    dropdown.innerHTML = '<option value="">Select Vehicle</option>';
+    vehiclesSnapshot.forEach(doc => {
+        const vehicle = doc.data();
+        const option = document.createElement('option');
+        option.value = doc.id;
+        option.textContent = vehicle.vehicleNumber;
+        if (doc.id === selectedId) {
+            option.selected = true;
+        }
+        dropdown.appendChild(option);
+    });
+}
+
+async function populateEditHireDriverDropdown(selectedId) {
+    const dropdown = document.getElementById('editHireDriver');
+    const driversSnapshot = await db.collection('drivers').get();
+    dropdown.innerHTML = '<option value="">Select Driver</option>';
+    driversSnapshot.forEach(doc => {
+        const driver = doc.data();
+        const option = document.createElement('option');
+        option.value = doc.id;
+        option.textContent = driver.name;
+        if (doc.id === selectedId) {
+            option.selected = true;
+        }
+        dropdown.appendChild(option);
+    });
+}
+
+async function populateEditAdvancePaymentVehicleDropdown(selectedId) {
+    const dropdown = document.getElementById('editAdvancePaymentVehicle');
+    const vehiclesSnapshot = await db.collection('vehicles').get();
+    dropdown.innerHTML = '<option value="">Select Vehicle</option>';
+    vehiclesSnapshot.forEach(doc => {
+        const vehicle = doc.data();
+        const option = document.createElement('option');
+        option.value = doc.id;
+        option.textContent = vehicle.vehicleNumber;
+        if (doc.id === selectedId) {
+            option.selected = true;
+        }
+        dropdown.appendChild(option);
+    });
+}
+
 // Initialize the app
 function initApp() {
     // Load all data
@@ -1241,8 +1322,5 @@ function initApp() {
     loadAdvancePayments();
 
     // Initialize totals display
-    updateTotals(0, 0, 0, 0);
-
-    // Add PDF export button event listener
-    document.getElementById('exportPdfBtn').addEventListener('click', exportHiresToPDF);
+    updateTotals(0, 0, 0, 0, 0, 0);
 }
