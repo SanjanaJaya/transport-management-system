@@ -1106,13 +1106,13 @@ async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
             1: { cellWidth: 18 },  // Vehicle
             2: { cellWidth: 22 },  // From
             3: { cellWidth: 22 },  // To
-            4: { cellWidth: 16 },  // Distance
+            4: { cellWidth: 18 },  // Distance
             5: { cellWidth: 11 },  // Fuel (L)
             6: { cellWidth: 13 },  // Fuel Price
             7: { cellWidth: 16 },  // Fuel Cost
             8: { cellWidth: 16 },  // Waiting (Hrs)
             9: { cellWidth: 18 },  // Waiting Cost
-            10: { cellWidth: 16 }, // Loading
+            10: { cellWidth: 18 }, // Loading
             11: { cellWidth: 18 }, // Loading Charge
             12: { cellWidth: 18 }, // Other Charges
             13: { cellWidth: 18 }, // Hire Amount
