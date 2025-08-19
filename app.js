@@ -246,6 +246,9 @@ hireForm.addEventListener('submit', async (e) => {
         // Loading charge
         const loadingCharge = document.getElementById('loading').checked ? vehicle.loadingCharge : 0;
 
+        // Other charges
+        const otherCharges = parseFloat(document.getElementById('otherCharges').value) || 0;
+
         const hire = {
             vehicleId: vehicleId,
             vehicleNumber: vehicle.vehicleNumber,
@@ -256,11 +259,12 @@ hireForm.addEventListener('submit', async (e) => {
             hireDate: document.getElementById('hireDate').value,
             driverId: document.getElementById('hireDriver').value || null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            hireAmount: hireAmount + waitingCost + loadingCharge,
+            hireAmount: hireAmount + waitingCost + loadingCharge + otherCharges,
             waitingHours: waitingHours,
             waitingCost: waitingCost,
             loading: document.getElementById('loading').checked,
             loadingCharge: loadingCharge,
+            otherCharges: otherCharges,
             pricingTiers: {
                 tier1Distance: vehicle.tier1Distance,
                 tier1Price: vehicle.tier1Price,
@@ -412,11 +416,12 @@ async function loadHires() {
         let totalDistance = 0;
         let totalWaiting = 0;
         let totalLoading = 0;
+        let totalOtherCharges = 0;
         let totalAdvancePayments = 0;
 
         if (hiresSnapshot.empty) {
-            hiresList.innerHTML = '<tr><td colspan="15">No hire records found</td></tr>';
-            updateTotals(0, 0, 0, 0, 0, 0);
+            hiresList.innerHTML = '<tr><td colspan="16">No hire records found</td></tr>';
+            updateTotals(0, 0, 0, 0, 0, 0, 0);
             return;
         }
 
@@ -449,6 +454,7 @@ async function loadHires() {
                 <td class="text-center">${hire.waitingCost ? hire.waitingCost.toFixed(2) : '0.00'}</td>
                 <td class="text-center">${hire.loading ? 'Yes' : 'No'}</td>
                 <td class="text-center">${hire.loadingCharge ? hire.loadingCharge.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.otherCharges ? hire.otherCharges.toFixed(2) : '0.00'}</td>
                 <td class="text-center">${hire.hireAmount.toFixed(2)}</td>
                 <td class="text-center">${driverName}</td>
                 <td class="text-center">
@@ -463,6 +469,7 @@ async function loadHires() {
             totalHire += hire.hireAmount;
             totalWaiting += hire.waitingCost || 0;
             totalLoading += hire.loadingCharge || 0;
+            totalOtherCharges += hire.otherCharges || 0;
         });
         
         const currentMonth = document.getElementById('filterMonth').value;
@@ -485,12 +492,12 @@ async function loadHires() {
                 .reduce((sum, amount) => sum + amount, 0);
         }
         
-        updateTotals(totalDistance, totalFuel, totalHire, totalWaiting, totalLoading, totalAdvancePayments);
+        updateTotals(totalDistance, totalFuel, totalHire, totalWaiting, totalLoading, totalOtherCharges, totalAdvancePayments);
         setupActionListeners('hires');
 
     } catch (error) {
         console.error("Error loading hires:", error);
-        document.getElementById('hiresList').innerHTML = '<tr><td colspan="15">Error loading hire records</td></tr>';
+        document.getElementById('hiresList').innerHTML = '<tr><td colspan="16">Error loading hire records</td></tr>';
     }
 }
 
@@ -582,6 +589,7 @@ async function handleEdit(e, collectionName) {
             document.getElementById('editFuelPricePerLiter').value = data.fuelPricePerLiter || '';
             document.getElementById('editWaitingHours').value = data.waitingHours || '';
             document.getElementById('editLoading').checked = data.loading || false;
+            document.getElementById('editOtherCharges').value = data.otherCharges || '';
             await populateEditHireDriverDropdown(data.driverId);
             document.getElementById('editHireModal').style.display = 'block';
         } else if (collectionName === 'advancePayments') {
@@ -699,6 +707,9 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
 
         // Loading charge
         const loadingCharge = document.getElementById('editLoading').checked ? vehicle.loadingCharge : 0;
+
+        // Other charges
+        const otherCharges = parseFloat(document.getElementById('editOtherCharges').value) || 0;
         
         const hire = {
             hireDate: document.getElementById('editHireDate').value,
@@ -709,11 +720,12 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
             toLocation: document.getElementById('editToLocation').value,
             distance: distance,
             driverId: document.getElementById('editHireDriver').value || null,
-            hireAmount: hireAmount + waitingCost + loadingCharge,
+            hireAmount: hireAmount + waitingCost + loadingCharge + otherCharges,
             waitingHours: waitingHours,
             waitingCost: waitingCost,
             loading: document.getElementById('editLoading').checked,
-            loadingCharge: loadingCharge
+            loadingCharge: loadingCharge,
+            otherCharges: otherCharges
         };
 
         const fuelLiters = document.getElementById('editFuelLiters').value;
@@ -825,10 +837,11 @@ window.addEventListener('click', (e) => {
 });
 
 // Update total sections
-function updateTotals(totalDistance, totalFuel, totalHire, totalWaiting, totalLoading, totalAdvancePayments) {
+function updateTotals(totalDistance, totalFuel, totalHire, totalWaiting, totalLoading, totalOtherCharges, totalAdvancePayments) {
     document.getElementById('totalDistance').textContent = totalDistance.toFixed(2);
     document.getElementById('totalFuelCost').textContent = totalFuel.toFixed(2);
     document.getElementById('totalWaitingCost').textContent = totalWaiting.toFixed(2);
+    document.getElementById('totalOtherCharges').textContent = totalOtherCharges.toFixed(2);
     
     const totalIncome = totalHire;
     const netIncome = totalIncome - totalFuel - totalAdvancePayments;
@@ -859,11 +872,12 @@ async function filterHires() {
         let totalDistance = 0;
         let totalWaiting = 0;
         let totalLoading = 0;
+        let totalOtherCharges = 0;
         let totalAdvancePayments = 0;
 
         if (hiresSnapshot.empty) {
-            hiresList.innerHTML = '<tr><td colspan="15">No hire records found for selected filters</td></tr>';
-            updateTotals(0, 0, 0, 0, 0, 0);
+            hiresList.innerHTML = '<tr><td colspan="16">No hire records found for selected filters</td></tr>';
+            updateTotals(0, 0, 0, 0, 0, 0, 0);
             return;
         }
 
@@ -898,6 +912,7 @@ async function filterHires() {
                 <td class="text-center">${hire.waitingCost ? hire.waitingCost.toFixed(2) : '0.00'}</td>
                 <td class="text-center">${hire.loading ? 'Yes' : 'No'}</td>
                 <td class="text-center">${hire.loadingCharge ? hire.loadingCharge.toFixed(2) : '0.00'}</td>
+                <td class="text-center">${hire.otherCharges ? hire.otherCharges.toFixed(2) : '0.00'}</td>
                 <td class="text-center">${hire.hireAmount.toFixed(2)}</td>
                 <td class="text-center">${driverName}</td>
                 <td class="text-center">
@@ -912,6 +927,7 @@ async function filterHires() {
             totalHire += hire.hireAmount;
             totalWaiting += hire.waitingCost || 0;
             totalLoading += hire.loadingCharge || 0;
+            totalOtherCharges += hire.otherCharges || 0;
         });
 
         // Calculate filtered advance payments
@@ -934,7 +950,7 @@ async function filterHires() {
                 .reduce((sum, amount) => sum + amount, 0);
         }
 
-        updateTotals(totalDistance, totalFuel, totalHire, totalWaiting, totalLoading, totalAdvancePayments);
+        updateTotals(totalDistance, totalFuel, totalHire, totalWaiting, totalLoading, totalOtherCharges, totalAdvancePayments);
         setupActionListeners('hires');
 
     } catch (error) {
@@ -1041,6 +1057,7 @@ async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
     let totalHire = 0;
     let totalWaiting = 0;
     let totalLoading = 0;
+    let totalOtherCharges = 0;
 
     hiresSnapshot.forEach(doc => {
         const hire = doc.data();
@@ -1058,6 +1075,7 @@ async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
             hire.waitingCost ? hire.waitingCost.toFixed(2) : '0.00',
             hire.loading ? 'Yes' : 'No',
             hire.loadingCharge ? hire.loadingCharge.toFixed(2) : '0.00',
+            hire.otherCharges ? hire.otherCharges.toFixed(2) : '0.00',
             hire.hireAmount.toFixed(2),
             driverName
         ]);
@@ -1068,6 +1086,7 @@ async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
         totalHire += hire.hireAmount;
         totalWaiting += hire.waitingCost || 0;
         totalLoading += hire.loadingCharge || 0;
+        totalOtherCharges += hire.otherCharges || 0;
     });
 
     if (hiresSnapshot.empty) {
@@ -1077,26 +1096,27 @@ async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
         // Define column headers
         const headers = [
             ['Date', 'Vehicle', 'From', 'To', 'Distance', 'Fuel (L)', 'Fuel Price', 'Fuel Cost', 
-             'Waiting (Hrs)', 'Waiting Cost', 'Loading', 'Loading Charge', 'Hire Amount', 'Driver']
+             'Waiting (Hrs)', 'Waiting Cost', 'Loading', 'Loading Charge', 'Other Charges', 'Hire Amount', 'Driver']
         ];
         
         // Calculate column widths to maximize space
         const availableWidth = pageWidth - (margin * 2);
         const columnStyles = {
-            0: { cellWidth: 20 },  // Date
-            1: { cellWidth: 20 },  // Vehicle
-            2: { cellWidth: 25 },  // From
-            3: { cellWidth: 25 },  // To
-            4: { cellWidth: 18 },  // Distance
-            5: { cellWidth: 12 },  // Fuel (L)
-            6: { cellWidth: 15 },  // Fuel Price
-            7: { cellWidth: 18 },  // Fuel Cost
-            8: { cellWidth: 18 },  // Waiting (Hrs)
-            9: { cellWidth: 20 },  // Waiting Cost
-            10: { cellWidth: 18 }, // Loading
-            11: { cellWidth: 20 }, // Loading Charge
-            12: { cellWidth: 20 }, // Hire Amount
-            13: { cellWidth: 28 }  // Driver
+            0: { cellWidth: 18 },  // Date
+            1: { cellWidth: 18 },  // Vehicle
+            2: { cellWidth: 22 },  // From
+            3: { cellWidth: 22 },  // To
+            4: { cellWidth: 16 },  // Distance
+            5: { cellWidth: 11 },  // Fuel (L)
+            6: { cellWidth: 13 },  // Fuel Price
+            7: { cellWidth: 16 },  // Fuel Cost
+            8: { cellWidth: 16 },  // Waiting (Hrs)
+            9: { cellWidth: 18 },  // Waiting Cost
+            10: { cellWidth: 16 }, // Loading
+            11: { cellWidth: 18 }, // Loading Charge
+            12: { cellWidth: 18 }, // Other Charges
+            13: { cellWidth: 18 }, // Hire Amount
+            14: { cellWidth: 26 }  // Driver
         };
 
         // Create the table with full width
@@ -1190,8 +1210,12 @@ async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
         
         // Second row of totals
         doc.text(`Total Loading Charges: LKR ${totalLoading.toFixed(2)}`, margin, yOffset);
-        doc.text(`Total Hire Amount: LKR ${totalHire.toFixed(2)}`, margin + 70, yOffset);
-        doc.text(`Total Advance Payments: LKR ${totalAdvancePayments.toFixed(2)}`, margin + 140, yOffset);
+        doc.text(`Total Other Charges: LKR ${totalOtherCharges.toFixed(2)}`, margin + 70, yOffset);
+        doc.text(`Total Hire Amount: LKR ${totalHire.toFixed(2)}`, margin + 140, yOffset);
+        yOffset += 7;
+        
+        // Third row of totals
+        doc.text(`Total Advance Payments: LKR ${totalAdvancePayments.toFixed(2)}`, margin, yOffset);
         yOffset += 10;
         
         // Add net profit with emphasis
@@ -1322,5 +1346,5 @@ function initApp() {
     loadAdvancePayments();
 
     // Initialize totals display
-    updateTotals(0, 0, 0, 0, 0, 0);
+    updateTotals(0, 0, 0, 0, 0, 0, 0);
 }

@@ -165,8 +165,10 @@
                                     <th class="text-center">Waiting Cost</th>
                                     <th class="text-center">Loading</th>
                                     <th class="text-center">Loading Charge</th>
+                                    <th class="text-center">Other Charges</th>
                                     <th class="text-center">Amount</th>
                                     <th class="text-center">Driver</th>
+                                    <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="hiresList">
@@ -180,11 +182,13 @@
                                     <td></td>
                                     <td id="totalWaitingCost" class="text-center">0.00</td>
                                     <td colspan="2" class="text-center"></td>
+                                    <td id="totalOtherCharges" class="text-center">0.00</td>
                                     <td></td>
+                                    <td class="text-center"></td>
                                     <td class="text-center"></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="10" class="text-center">Net Income</td>
+                                    <td colspan="11" class="text-center">Net Income</td>
                                     <td colspan="2" id="netIncome" class="text-center">0.00</td>
                                     <td colspan="2"></td>
                                 </tr>
@@ -448,6 +452,10 @@
                         <input type="checkbox" id="loading">
                     </div>
                     <div class="form-group">
+                        <label for="otherCharges">Other Charges (LKR):</label>
+                        <input type="number" id="otherCharges" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
                         <label for="hireDriver">Driver:</label>
                         <select id="hireDriver">
                             <option value="">Select Driver</option>
@@ -518,6 +526,10 @@
                     <div class="form-group loading-checkbox">
                         <label for="editLoading">Loading:</label>
                         <input type="checkbox" id="editLoading">
+                    </div>
+                    <div class="form-group">
+                        <label for="editOtherCharges">Other Charges (LKR):</label>
+                        <input type="number" id="editOtherCharges" step="0.01" value="0">
                     </div>
                     <div class="form-group">
                         <label for="editHireDriver">Driver:</label>
