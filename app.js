@@ -1,4 +1,4 @@
-// Updated app.js with all requested changes
+// Updated app.js with all requested changes including Job Number implementation
 
 // Login Functionality with Auto-Logout
 document.addEventListener('DOMContentLoaded', function() {
@@ -250,33 +250,34 @@ hireForm.addEventListener('submit', async (e) => {
         const otherCharges = parseFloat(document.getElementById('otherCharges').value) || 0;
 
         const hire = {
-            vehicleId: vehicleId,
-            vehicleNumber: vehicle.vehicleNumber,
-            month: document.getElementById('hireMonth').value,
-            fromLocation: document.getElementById('fromLocation').value,
-            toLocation: document.getElementById('toLocation').value,
-            distance: distance,
-            hireDate: document.getElementById('hireDate').value,
-            driverId: document.getElementById('hireDriver').value || null,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            hireAmount: hireAmount + waitingCost + loadingCharge + otherCharges,
-            waitingHours: waitingHours,
-            waitingCost: waitingCost,
-            loading: document.getElementById('loading').checked,
-            loadingCharge: loadingCharge,
-            otherCharges: otherCharges,
-            pricingTiers: {
-                tier1Distance: vehicle.tier1Distance,
-                tier1Price: vehicle.tier1Price,
-                tier2Distance: vehicle.tier2Distance,
-                tier2Price: vehicle.tier2Price,
-                tier3Price: vehicle.tier3Price,
-                minimumHire: vehicle.minimumHire,
-                waitingPrice1: vehicle.waitingPrice1,
-                waitingPrice2: vehicle.waitingPrice2,
-                loadingCharge: vehicle.loadingCharge
-            }
-        };
+    jobNumber: document.getElementById('jobNumber').value.trim() || null, // Allow empty or null
+    vehicleId: vehicleId,
+    vehicleNumber: vehicle.vehicleNumber,
+    month: document.getElementById('hireMonth').value,
+    fromLocation: document.getElementById('fromLocation').value,
+    toLocation: document.getElementById('toLocation').value,
+    distance: distance,
+    hireDate: document.getElementById('hireDate').value,
+    driverId: document.getElementById('hireDriver').value || null,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    hireAmount: hireAmount + waitingCost + loadingCharge + otherCharges,
+    waitingHours: waitingHours,
+    waitingCost: waitingCost,
+    loading: document.getElementById('loading').checked,
+    loadingCharge: loadingCharge,
+    otherCharges: otherCharges,
+    pricingTiers: {
+        tier1Distance: vehicle.tier1Distance,
+        tier1Price: vehicle.tier1Price,
+        tier2Distance: vehicle.tier2Distance,
+        tier2Price: vehicle.tier2Price,
+        tier3Price: vehicle.tier3Price,
+        minimumHire: vehicle.minimumHire,
+        waitingPrice1: vehicle.waitingPrice1,
+        waitingPrice2: vehicle.waitingPrice2,
+        loadingCharge: vehicle.loadingCharge
+    }
+};
 
         const fuelLiters = document.getElementById('fuelLiters').value;
         const fuelPricePerLiter = document.getElementById('fuelPricePerLiter').value;
@@ -420,7 +421,7 @@ async function loadHires() {
         let totalAdvancePayments = 0;
 
         if (hiresSnapshot.empty) {
-            hiresList.innerHTML = '<tr><td colspan="16">No hire records found</td></tr>';
+            hiresList.innerHTML = '<tr><td colspan="17">No hire records found</td></tr>'; // UPDATED: colspan to 17
             updateTotals(0, 0, 0, 0, 0, 0, 0);
             return;
         }
@@ -442,6 +443,7 @@ async function loadHires() {
             const driverName = hire.driverId ? drivers[hire.driverId] || 'N/A' : 'N/A';
             const tr = document.createElement('tr');
             tr.innerHTML = `
+                <td class="text-center">${hire.jobNumber || 'N/A'}</td> <!-- ADDED: Job Number column -->
                 <td class="text-center">${hire.hireDate}</td>
                 <td class="text-center">${hire.vehicleNumber}</td>
                 <td class="text-center">${hire.fromLocation}</td>
@@ -497,7 +499,7 @@ async function loadHires() {
 
     } catch (error) {
         console.error("Error loading hires:", error);
-        document.getElementById('hiresList').innerHTML = '<tr><td colspan="16">Error loading hire records</td></tr>';
+        document.getElementById('hiresList').innerHTML = '<tr><td colspan="17">Error loading hire records</td></tr>'; // UPDATED: colspan to 17
     }
 }
 
@@ -579,6 +581,7 @@ async function handleEdit(e, collectionName) {
             document.getElementById('editDriverModal').style.display = 'block';
         } else if (collectionName === 'hires') {
             document.getElementById('editHireId').value = id;
+            document.getElementById('editJobNumber').value = data.jobNumber || ''; // ADDED: Job Number field
             document.getElementById('editHireDate').value = data.hireDate;
             document.getElementById('editHireMonth').value = data.month;
             await populateEditHireVehicleDropdown(data.vehicleId);
@@ -712,21 +715,22 @@ document.getElementById('editHireForm').addEventListener('submit', async (e) => 
         const otherCharges = parseFloat(document.getElementById('editOtherCharges').value) || 0;
         
         const hire = {
-            hireDate: document.getElementById('editHireDate').value,
-            month: document.getElementById('editHireMonth').value,
-            vehicleId: vehicleId,
-            vehicleNumber: vehicle.vehicleNumber,
-            fromLocation: document.getElementById('editFromLocation').value,
-            toLocation: document.getElementById('editToLocation').value,
-            distance: distance,
-            driverId: document.getElementById('editHireDriver').value || null,
-            hireAmount: hireAmount + waitingCost + loadingCharge + otherCharges,
-            waitingHours: waitingHours,
-            waitingCost: waitingCost,
-            loading: document.getElementById('editLoading').checked,
-            loadingCharge: loadingCharge,
-            otherCharges: otherCharges
-        };
+    jobNumber: document.getElementById('editJobNumber').value.trim() || null, // Allow empty or null
+    hireDate: document.getElementById('editHireDate').value,
+    month: document.getElementById('editHireMonth').value,
+    vehicleId: vehicleId,
+    vehicleNumber: vehicle.vehicleNumber,
+    fromLocation: document.getElementById('editFromLocation').value,
+    toLocation: document.getElementById('editToLocation').value,
+    distance: distance,
+    driverId: document.getElementById('editHireDriver').value || null,
+    hireAmount: hireAmount + waitingCost + loadingCharge + otherCharges,
+    waitingHours: waitingHours,
+    waitingCost: waitingCost,
+    loading: document.getElementById('editLoading').checked,
+    loadingCharge: loadingCharge,
+    otherCharges: otherCharges
+};
 
         const fuelLiters = document.getElementById('editFuelLiters').value;
         const fuelPricePerLiter = document.getElementById('editFuelPricePerLiter').value;
@@ -876,7 +880,7 @@ async function filterHires() {
         let totalAdvancePayments = 0;
 
         if (hiresSnapshot.empty) {
-            hiresList.innerHTML = '<tr><td colspan="16">No hire records found for selected filters</td></tr>';
+            hiresList.innerHTML = '<tr><td colspan="17">No hire records found for selected filters</td></tr>'; // UPDATED: colspan to 17
             updateTotals(0, 0, 0, 0, 0, 0, 0);
             return;
         }
@@ -900,6 +904,7 @@ async function filterHires() {
             const driverName = hire.driverId ? drivers[hire.driverId] || 'N/A' : 'N/A';
             const tr = document.createElement('tr');
             tr.innerHTML = `
+                <td class="text-center">${hire.jobNumber || 'N/A'}</td> <!-- ADDED: Job Number column -->
                 <td class="text-center">${hire.hireDate}</td>
                 <td class="text-center">${hire.vehicleNumber}</td>
                 <td class="text-center">${hire.fromLocation}</td>
@@ -1000,8 +1005,8 @@ async function exportPdf() {
 async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 10; // Reduced margin for more space
-    let yOffset = 10;
+    const margin = 5; // Reduced margin for more space
+    let yOffset = 5;
 
     // Add logo if available
     if (logoImg) {
@@ -1063,6 +1068,7 @@ async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
         const hire = doc.data();
         const driverName = hire.driverId ? drivers[hire.driverId] || 'N/A' : 'N/A';
         rows.push([
+            hire.jobNumber || 'N/A', // ADDED: Job Number column
             hire.hireDate,
             hire.vehicleNumber,
             hire.fromLocation,
@@ -1093,30 +1099,31 @@ async function generatePdfContent(doc, logoImg, month, vehicleId, vehicleName) {
         doc.setFontSize(10);
         doc.text('No hire records found for selected filter', margin, yOffset);
     } else {
-        // Define column headers
+        // Define column headers (UPDATED: Added Job No.)
         const headers = [
-            ['Date', 'Vehicle', 'From', 'To', 'Distance', 'Fuel (L)', 'Fuel Price', 'Fuel Cost', 
+            ['Job No.', 'Date', 'Vehicle', 'From', 'To', 'Distance', 'Fuel (L)', 'Fuel Price', 'Fuel Cost', 
              'Waiting (Hrs)', 'Waiting Cost', 'Loading', 'Loading Charge', 'Other Charges', 'Hire Amount', 'Driver']
         ];
         
         // Calculate column widths to maximize space
         const availableWidth = pageWidth - (margin * 2);
         const columnStyles = {
-            0: { cellWidth: 18 },  // Date
-            1: { cellWidth: 18 },  // Vehicle
-            2: { cellWidth: 22 },  // From
-            3: { cellWidth: 22 },  // To
-            4: { cellWidth: 18 },  // Distance
-            5: { cellWidth: 11 },  // Fuel (L)
-            6: { cellWidth: 13 },  // Fuel Price
-            7: { cellWidth: 16 },  // Fuel Cost
-            8: { cellWidth: 16 },  // Waiting (Hrs)
-            9: { cellWidth: 18 },  // Waiting Cost
-            10: { cellWidth: 18 }, // Loading
-            11: { cellWidth: 18 }, // Loading Charge
-            12: { cellWidth: 18 }, // Other Charges
-            13: { cellWidth: 18 }, // Hire Amount
-            14: { cellWidth: 26 }  // Driver
+            0: { cellWidth: 20 },  // Job No.
+            1: { cellWidth: 18 },  // Date
+            2: { cellWidth: 18 },  // Vehicle
+            3: { cellWidth: 22 },  // From
+            4: { cellWidth: 22 },  // To
+            5: { cellWidth: 18 },  // Distance
+            6: { cellWidth: 12 },  // Fuel (L)
+            7: { cellWidth: 13 },  // Fuel Price
+            8: { cellWidth: 16 },  // Fuel Cost
+            9: { cellWidth: 16 },  // Waiting (Hrs)
+            10: { cellWidth: 16 }, // Waiting Cost
+            11: { cellWidth: 17 }, // Loading
+            12: { cellWidth: 18 }, // Loading Charge
+            13: { cellWidth: 17 }, // Other Charges
+            14: { cellWidth: 17 }, // Hire Amount
+            15: { cellWidth: 26 }  // Driver
         };
 
         // Create the table with full width

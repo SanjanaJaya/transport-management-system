@@ -153,6 +153,7 @@
                         <table id="hiresTable">
                             <thead>
                                 <tr>
+                                    <th class="text-center">Job No.</th>
                                     <th class="text-center">Date</th>
                                     <th class="text-center">Vehicle</th>
                                     <th class="text-center">From</th>
@@ -175,6 +176,7 @@
                                 </tbody>
                             <tfoot>
                                 <tr>
+                                    <td></td>
                                     <td colspan="4" class="text-center">Total</td>
                                     <td id="totalDistance" class="text-center">0.0</td>
                                     <td colspan="2"></td>
@@ -188,6 +190,7 @@
                                     <td class="text-center"></td>
                                 </tr>
                                 <tr>
+                                    <td></td>
                                     <td colspan="11" class="text-center">Net Income</td>
                                     <td colspan="2" id="netIncome" class="text-center">0.00</td>
                                     <td colspan="2"></td>
@@ -396,6 +399,10 @@
                 <h3>Add New Vehicle Hire</h3>
                 <form id="hireForm">
                     <div class="form-group">
+                         <label for="jobNumber">Job No.:</label>
+                        <input type="text" id="jobNumber" placeholder="e.g., JOB001, TR-2025-001 (Optional)">
+                    </div>
+                    <div class="form-group">
                         <label for="hireDate">Date:</label>
                         <input type="date" id="hireDate" required>
                     </div>
@@ -472,6 +479,10 @@
                 <h3>Edit Hire Record</h3>
                 <form id="editHireForm">
                     <input type="hidden" id="editHireId">
+                    <div class="form-group">
+                        <label for="editJobNumber">Job No.:</label>
+                        <input type="text" id="editJobNumber" placeholder="e.g., JOB001, TR-2025-001 (Optional)">
+                    </div>
                     <div class="form-group">
                         <label for="editHireDate">Date:</label>
                         <input type="date" id="editHireDate" required>
