@@ -280,7 +280,7 @@ nav.sidebar {
 }
 
 /* Minimized sidebar */
-nav.sidebar.minimized {
+nav.sidebar.collapsed {
     width: 70px;
     padding: 1rem 0 0 0;
 }
@@ -293,7 +293,7 @@ nav.sidebar.minimized {
     transition: all 0.3s ease;
 }
 
-nav.sidebar.minimized .sidebar-header {
+nav.sidebar.collapsed .sidebar-header {
     padding: 0 0.5rem 1rem;
     margin-bottom: 1rem;
 }
@@ -308,7 +308,7 @@ nav.sidebar.minimized .sidebar-header {
     transition: all 0.3s ease;
 }
 
-nav.sidebar.minimized .sidebar-logo {
+nav.sidebar.collapsed .sidebar-logo {
     height: 40px;
     width: 40px;
 }
@@ -374,13 +374,13 @@ nav.sidebar button {
     overflow: hidden;
 }
 
-nav.sidebar.minimized button {
+nav.sidebar.collapsed button {
     padding: 0.875rem 0.5rem;
     justify-content: center;
     text-align: center;
 }
 
-nav.sidebar.minimized button span {
+nav.sidebar.collapsed button span {
     display: none;
 }
 
