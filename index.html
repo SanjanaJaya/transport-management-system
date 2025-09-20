@@ -54,7 +54,8 @@
                     <img src="https://i.postimg.cc/x19FXbdR/New-Transport-Logo.png" alt="Jayasooriya Enterprises Logo" class="sidebar-logo">
                 </div>
                 <div class="sidebar-nav">
-                    <button id="vehiclesTab" class="active" data-tooltip="Vehicles"><i class="fas fa-truck"></i> <span>Vehicles</span></button>
+                    <button id="dashboardTab" data-tooltip="Dashboard" class="active"><i class="fas fa-chart-line"></i> <span>Dashboard</span></button>
+                    <button id="vehiclesTab" data-tooltip="Vehicles"><i class="fas fa-truck"></i> <span>Vehicles</span></button>
                     <button id="driversTab" data-tooltip="Drivers"><i class="fas fa-user"></i> <span>Drivers</span></button>
                     <button id="hiresTab" data-tooltip="Vehicle Hires"><i class="fas fa-clipboard-list"></i> <span>Vehicle Hires</span></button>
                     <button id="advancePaymentsTab" data-tooltip="Advance Payments"><i class="fas fa-money-bill-wave"></i> <span>Advance Payments</span></button>
@@ -67,7 +68,128 @@
             </nav>
 
             <main class="content-area">
-                <section id="vehiclesSection" class="active">
+                <section id="dashboardSection" class="active">
+                    <div class="section-header">
+                        <h2>Dashboard Overview</h2>
+                        <div class="date-filter">
+                            <label for="dashboardMonth">Month:</label>
+                            <select id="dashboardMonth">
+                                <option value="January">January</option>
+                                <option value="February">February</option>
+                                <option value="March">March</option>
+                                <option value="April">April</option>
+                                <option value="May">May</option>
+                                <option value="June">June</option>
+                                <option value="July">July</option>
+                                <option value="August">August</option>
+                                <option value="September">September</option>
+                                <option value="October">October</option>
+                                <option value="November">November</option>
+                                <option value="December">December</option>
+                            </select>
+                            <button id="refreshDashboard" class="add-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                        </div>
+                    </div>
+                    <p class="section-description">Key performance metrics for the selected month</p>
+                    
+                    <div class="dashboard-grid">
+                        <!-- Summary Cards -->
+                        <div class="summary-cards">
+                            <div class="summary-card revenue">
+                                <div class="card-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h3>Total Revenue</h3>
+                                    <p class="amount" id="totalRevenue">LKR 0.00</p>
+                                    <p class="subtext">This Month</p>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-card hires">
+                                <div class="card-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h3>Total Hires</h3>
+                                    <p class="amount" id="totalHires">0</p>
+                                    <p class="subtext">This Month</p>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-card fuel">
+                                <div class="card-icon">
+                                    <i class="fas fa-gas-pump"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h3>Fuel Cost</h3>
+                                    <p class="amount" id="totalFuelCost">LKR 0.00</p>
+                                    <p class="subtext">This Month</p>
+                                </div>
+                            </div>
+                            
+                            <div class="summary-card profit">
+                                <div class="card-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="card-content">
+                                    <h3>Net Profit</h3>
+                                    <p class="amount" id="netProfit">LKR 0.00</p>
+                                    <p class="subtext">After Advances</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Vehicle Overview -->
+                        <div class="vehicle-overview">
+                            <h3>Vehicle Summary</h3>
+                            <div class="vehicle-cards">
+                                <div class="vehicle-card">
+                                    <h4>Company Owned</h4>
+                                    <p class="count" id="companyVehicles">0</p>
+                                    <p class="subtext">Vehicles</p>
+                                </div>
+                                
+                                <div class="vehicle-card">
+                                    <h4>Rented Vehicles</h4>
+                                    <p class="count" id="rentedVehicles">0</p>
+                                    <p class="subtext">Vehicles</p>
+                                </div>
+                                
+                                <div class="vehicle-card">
+                                    <h4>Total Drivers</h4>
+                                    <p class="count" id="totalDrivers">0</p>
+                                    <p class="subtext">All Vehicles</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Vehicle Performance -->
+                        <div class="vehicle-performance">
+                            <h3>Vehicle Performance This Month</h3>
+                            <div class="performance-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Vehicle Number</th>
+                                            <th>Ownership</th>
+                                            <th>Hires</th>
+                                            <th>Revenue</th>
+                                            <th>Fuel Cost</th>
+                                            <th>Advances</th>
+                                            <th>Net Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vehiclePerformanceList">
+                                        <tr><td colspan="7">No data available</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="vehiclesSection">
                     <div class="section-header">
                         <h2>Vehicle Management</h2>
                         <button id="addVehicleBtn" class="add-btn"><i class="fas fa-plus-circle"></i> Add Vehicle</button>
@@ -656,76 +778,34 @@
 
             // Desktop sidebar toggle
             function toggleSidebar() {
-                sidebar.classList.toggle('minimized');
-                if (sidebar.classList.contains('minimized')) {
-                    sidebarIcon.className = 'fas fa-chevron-right';
+                sidebar.classList.toggle('collapsed');
+                if (sidebar.classList.contains('collapsed')) {
+                    sidebarIcon.classList.remove('fa-chevron-left');
+                    sidebarIcon.classList.add('fa-chevron-right');
                 } else {
-                    sidebarIcon.className = 'fas fa-chevron-left';
+                    sidebarIcon.classList.remove('fa-chevron-right');
+                    sidebarIcon.classList.add('fa-chevron-left');
                 }
             }
 
-            // Mobile menu toggle
-            function toggleMobileMenu() {
+            // Mobile sidebar toggle
+            function toggleMobileSidebar() {
                 sidebar.classList.toggle('mobile-open');
                 mobileOverlay.classList.toggle('active');
-                document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
-            }
-
-            function closeMobileMenu() {
-                sidebar.classList.remove('mobile-open');
-                mobileOverlay.classList.remove('active');
-                document.body.style.overflow = '';
             }
 
             // Event listeners
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    if (window.innerWidth > 768) {
-                        toggleSidebar();
-                    }
-                });
-            }
+            mobileMenuToggle.addEventListener('click', toggleMobileSidebar);
+            mobileOverlay.addEventListener('click', toggleMobileSidebar);
+            sidebarToggle.addEventListener('click', toggleSidebar);
 
-            if (mobileMenuToggle) {
-                mobileMenuToggle.addEventListener('click', toggleMobileMenu);
-            }
-
-            if (mobileOverlay) {
-                mobileOverlay.addEventListener('click', closeMobileMenu);
-            }
-
-            // Close mobile menu when clicking on sidebar buttons
-            const sidebarButtons = sidebar.querySelectorAll('button:not(.sidebar-toggle)');
-            sidebarButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    if (window.innerWidth <= 768) {
-                        closeMobileMenu();
-                    }
-                });
-            });
-
-            // Handle window resize
+            // Close mobile sidebar on window resize
             window.addEventListener('resize', function() {
                 if (window.innerWidth > 768) {
-                    closeMobileMenu();
-                    // Reset sidebar toggle button icon on resize
-                    if (sidebar.classList.contains('minimized')) {
-                        sidebarIcon.className = 'fas fa-chevron-right';
-                    } else {
-                        sidebarIcon.className = 'fas fa-chevron-left';
-                    }
-                } else {
-                    // Hide sidebar toggle on mobile
-                    sidebar.classList.remove('minimized');
-                    sidebarIcon.className = 'fas fa-chevron-left';
+                    sidebar.classList.remove('mobile-open');
+                    mobileOverlay.classList.remove('active');
                 }
             });
-
-            // Set initial state
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('minimized');
-            }
         });
     </script>
 </body>

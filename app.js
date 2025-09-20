@@ -110,12 +110,15 @@ const vehiclesSection = document.getElementById('vehiclesSection');
 const driversSection = document.getElementById('driversSection');
 const hiresSection = document.getElementById('hiresSection');
 const advancePaymentsSection = document.getElementById('advancePaymentsSection');
+const dashboardTab = document.getElementById('dashboardTab');
+const dashboardSection = document.getElementById('dashboardSection');
 
 // Tab Switching
 vehiclesTab.addEventListener('click', () => setActiveTab(vehiclesTab, vehiclesSection));
 driversTab.addEventListener('click', () => setActiveTab(driversTab, driversSection));
 hiresTab.addEventListener('click', () => setActiveTab(hiresTab, hiresSection));
 advancePaymentsTab.addEventListener('click', () => setActiveTab(advancePaymentsTab, advancePaymentsSection));
+dashboardTab.addEventListener('click', () => setActiveTab(dashboardTab, dashboardSection));
 
 function setActiveTab(tab, section) {
     document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
@@ -1355,3 +1358,173 @@ function initApp() {
     // Initialize totals display
     updateTotals(0, 0, 0, 0, 0, 0, 0);
 }
+
+// Set dashboard as default active tab
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current month as default in dashboard filter
+    const months = ["January", "February", "March", "April", "May", "June", 
+                   "July", "August", "September", "October", "November", "December"];
+    const currentMonth = months[new Date().getMonth()];
+    document.getElementById('dashboardMonth').value = currentMonth;
+    
+    // Load dashboard data when dashboard is active
+    if (dashboardSection.classList.contains('active')) {
+        loadDashboardData(currentMonth);
+    }
+});
+
+// Refresh dashboard button
+document.getElementById('refreshDashboard').addEventListener('click', function() {
+    const selectedMonth = document.getElementById('dashboardMonth').value;
+    loadDashboardData(selectedMonth);
+});
+
+// Dashboard month change
+document.getElementById('dashboardMonth').addEventListener('change', function() {
+    loadDashboardData(this.value);
+});
+
+// Load dashboard data
+async function loadDashboardData(month) {
+    try {
+        // Show loading state
+        document.getElementById('totalRevenue').textContent = 'Loading...';
+        document.getElementById('totalHires').textContent = 'Loading...';
+        document.getElementById('totalFuelCost').textContent = 'Loading...';
+        document.getElementById('netProfit').textContent = 'Loading...';
+        document.getElementById('companyVehicles').textContent = 'Loading...';
+        document.getElementById('rentedVehicles').textContent = 'Loading...';
+        document.getElementById('totalDrivers').textContent = 'Loading...';
+        document.getElementById('vehiclePerformanceList').innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+
+        // Fetch all necessary data
+        const [vehiclesSnapshot, hiresSnapshot, advancePaymentsSnapshot, driversSnapshot] = await Promise.all([
+            db.collection('vehicles').get(),
+            db.collection('hires').where('month', '==', month).get(),
+            db.collection('advancePayments').where('month', '==', month).get(),
+            db.collection('drivers').get()
+        ]);
+
+        // Calculate vehicle counts
+        let companyVehicles = 0;
+        let rentedVehicles = 0;
+        const vehicles = {};
+        
+        vehiclesSnapshot.forEach(doc => {
+            const vehicle = doc.data();
+            vehicles[doc.id] = vehicle;
+            
+            if (vehicle.ownership === 'company') {
+                companyVehicles++;
+            } else {
+                rentedVehicles++;
+            }
+        });
+
+        // Calculate hire metrics
+        let totalRevenue = 0;
+        let totalHires = 0;
+        let totalFuelCost = 0;
+        
+        const vehiclePerformance = {};
+        
+        hiresSnapshot.forEach(doc => {
+            const hire = doc.data();
+            totalRevenue += hire.hireAmount;
+            totalHires++;
+            totalFuelCost += hire.fuelCost || 0;
+            
+            // Track performance by vehicle
+            if (!vehiclePerformance[hire.vehicleId]) {
+                vehiclePerformance[hire.vehicleId] = {
+                    vehicleNumber: hire.vehicleNumber,
+                    ownership: vehicles[hire.vehicleId]?.ownership || 'Unknown',
+                    hires: 0,
+                    revenue: 0,
+                    fuelCost: 0,
+                    advances: 0
+                };
+            }
+            
+            vehiclePerformance[hire.vehicleId].hires++;
+            vehiclePerformance[hire.vehicleId].revenue += hire.hireAmount;
+            vehiclePerformance[hire.vehicleId].fuelCost += hire.fuelCost || 0;
+        });
+
+        // Calculate advance payments
+        let totalAdvancePayments = 0;
+        
+        advancePaymentsSnapshot.forEach(doc => {
+            const payment = doc.data();
+            totalAdvancePayments += payment.amount;
+            
+            // Track advances by vehicle
+            if (vehiclePerformance[payment.vehicleId]) {
+                vehiclePerformance[payment.vehicleId].advances += payment.amount;
+            }
+        });
+
+        // Calculate net profit
+        const netProfit = totalRevenue - totalFuelCost - totalAdvancePayments;
+        
+        // Update summary cards
+        document.getElementById('totalRevenue').textContent = `LKR ${totalRevenue.toFixed(2)}`;
+        document.getElementById('totalHires').textContent = totalHires;
+        document.getElementById('totalFuelCost').textContent = `LKR ${totalFuelCost.toFixed(2)}`;
+        document.getElementById('netProfit').textContent = `LKR ${netProfit.toFixed(2)}`;
+        document.getElementById('companyVehicles').textContent = companyVehicles;
+        document.getElementById('rentedVehicles').textContent = rentedVehicles;
+        document.getElementById('totalDrivers').textContent = driversSnapshot.size;
+
+        // Update vehicle performance table
+        const performanceList = document.getElementById('vehiclePerformanceList');
+        performanceList.innerHTML = '';
+        
+        if (Object.keys(vehiclePerformance).length === 0) {
+            performanceList.innerHTML = '<tr><td colspan="7">No data available for selected month</td></tr>';
+        } else {
+            Object.values(vehiclePerformance).forEach(vehicle => {
+                const netProfit = vehicle.revenue - vehicle.fuelCost - vehicle.advances;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${vehicle.vehicleNumber}</td>
+                    <td>${vehicle.ownership}</td>
+                    <td>${vehicle.hires}</td>
+                    <td>LKR ${vehicle.revenue.toFixed(2)}</td>
+                    <td>LKR ${vehicle.fuelCost.toFixed(2)}</td>
+                    <td>LKR ${vehicle.advances.toFixed(2)}</td>
+                    <td>LKR ${netProfit.toFixed(2)}</td>
+                `;
+                performanceList.appendChild(tr);
+            });
+        }
+        
+    } catch (error) {
+        console.error("Error loading dashboard data:", error);
+        showMessage("Failed to load dashboard data. Please check console for details.", 'error');
+        
+        // Reset display values on error
+        document.getElementById('totalRevenue').textContent = 'LKR 0.00';
+        document.getElementById('totalHires').textContent = '0';
+        document.getElementById('totalFuelCost').textContent = 'LKR 0.00';
+        document.getElementById('netProfit').textContent = 'LKR 0.00';
+        document.getElementById('companyVehicles').textContent = '0';
+        document.getElementById('rentedVehicles').textContent = '0';
+        document.getElementById('totalDrivers').textContent = '0';
+        document.getElementById('vehiclePerformanceList').innerHTML = '<tr><td colspan="7">Error loading data</td></tr>';
+    }
+}
+
+// Load dashboard data when dashboard section becomes active
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            if (dashboardSection.classList.contains('active')) {
+                const selectedMonth = document.getElementById('dashboardMonth').value;
+                loadDashboardData(selectedMonth);
+            }
+        }
+    });
+});
+
+observer.observe(dashboardSection, { attributes: true });
