@@ -12,17 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <style>
-        .text-center {
-            text-align: center;
-        }
-        /* Add this style for the loading checkbox */
-        .loading-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-    </style>
 </head>
 <body>
     <div id="loginSection" class="login-container">
@@ -47,7 +36,10 @@
     <div id="appSection" style="display: none;">
         <header>
             <div class="header-left">
-                <span class="header-company-name">JAYASOORIYA TRANSPORT - TRANSPORT MANAGEMENT SYSTEM</span>
+                <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-company-name">JAYASOORIYA TRANSPORT</span>
             </div>
             <div class="header-right">
                 <span class="admin-info"><i class="fas fa-user-tie"></i> Administrator</span>
@@ -56,14 +48,22 @@
         </header>
 
         <div class="app-container">
-            <nav class="sidebar">
+            <div class="mobile-overlay" id="mobileOverlay"></div>
+            <nav class="sidebar" id="sidebar">
                 <div class="sidebar-header">
                     <img src="https://i.postimg.cc/x19FXbdR/New-Transport-Logo.png" alt="Jayasooriya Enterprises Logo" class="sidebar-logo">
                 </div>
-                <button id="vehiclesTab" class="active"><i class="fas fa-truck"></i> Vehicles</button>
-                <button id="driversTab"><i class="fas fa-user"></i> Drivers</button>
-                <button id="hiresTab"><i class="fas fa-clipboard-list"></i> Vehicle Hires</button>
-                <button id="advancePaymentsTab"><i class="fas fa-money-bill-wave"></i> Advance Payments</button>
+                <div class="sidebar-nav">
+                    <button id="vehiclesTab" class="active" data-tooltip="Vehicles"><i class="fas fa-truck"></i> <span>Vehicles</span></button>
+                    <button id="driversTab" data-tooltip="Drivers"><i class="fas fa-user"></i> <span>Drivers</span></button>
+                    <button id="hiresTab" data-tooltip="Vehicle Hires"><i class="fas fa-clipboard-list"></i> <span>Vehicle Hires</span></button>
+                    <button id="advancePaymentsTab" data-tooltip="Advance Payments"><i class="fas fa-money-bill-wave"></i> <span>Advance Payments</span></button>
+                </div>
+                <div class="sidebar-toggle-container">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                </div>
             </nav>
 
             <main class="content-area">
@@ -76,22 +76,21 @@
                     <div class="table-container">
                         <table id="vehiclesTable">
                             <thead>
-    <tr>
-        <th>Vehicle Number</th>
-        <th>Size (ft)</th>
-        <th>Min. Hire</th>
-        <th>Tier 1 (0-100km)</th>
-        <th>Tier 2 (100-250km)</th>
-        <th>Tier 3 (250km+)</th>
-        <th>Waiting Price (0-24hrs)</th>
-        <th>Waiting Price (24+hrs)</th>
-        <th>Loading Charge</th>
-        <th>Ownership</th>
-        <th>Actions</th>
-    </tr>
-</thead>
-                            <tbody id="vehiclesList">
-                                </tbody>
+                                <tr>
+                                    <th>Vehicle Number</th>
+                                    <th>Size (ft)</th>
+                                    <th>Min. Hire</th>
+                                    <th>Tier 1 (0-100km)</th>
+                                    <th>Tier 2 (100-250km)</th>
+                                    <th>Tier 3 (250km+)</th>
+                                    <th>Waiting Price (0-24hrs)</th>
+                                    <th>Waiting Price (24+hrs)</th>
+                                    <th>Loading Charge</th>
+                                    <th>Ownership</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehiclesList"></tbody>
                         </table>
                     </div>
                 </section>
@@ -113,8 +112,7 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="driversList">
-                                </tbody>
+                            <tbody id="driversList"></tbody>
                         </table>
                     </div>
                 </section>
@@ -172,8 +170,7 @@
                                     <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="hiresList">
-                                </tbody>
+                            <tbody id="hiresList"></tbody>
                             <tfoot>
                                 <tr>
                                     <td></td>
@@ -217,14 +214,14 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="advancePaymentsList">
-                                </tbody>
+                            <tbody id="advancePaymentsList"></tbody>
                         </table>
                     </div>
                 </section>
             </main>
         </div>
         
+        <!-- All Modals -->
         <div id="addVehicleModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
@@ -642,6 +639,94 @@
         </footer>
     </div>
 
+    <!-- Message Box for notifications -->
+    <div id="messageBox" class="message-box" style="display: none;">
+        <span id="messageText"></span>
+    </div>
+
     <script src="app.js"></script>
+    <script>
+        // Mobile menu toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarIcon = sidebarToggle.querySelector('i');
+
+            // Desktop sidebar toggle
+            function toggleSidebar() {
+                sidebar.classList.toggle('minimized');
+                if (sidebar.classList.contains('minimized')) {
+                    sidebarIcon.className = 'fas fa-chevron-right';
+                } else {
+                    sidebarIcon.className = 'fas fa-chevron-left';
+                }
+            }
+
+            // Mobile menu toggle
+            function toggleMobileMenu() {
+                sidebar.classList.toggle('mobile-open');
+                mobileOverlay.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+            }
+
+            function closeMobileMenu() {
+                sidebar.classList.remove('mobile-open');
+                mobileOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            // Event listeners
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (window.innerWidth > 768) {
+                        toggleSidebar();
+                    }
+                });
+            }
+
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+            }
+
+            if (mobileOverlay) {
+                mobileOverlay.addEventListener('click', closeMobileMenu);
+            }
+
+            // Close mobile menu when clicking on sidebar buttons
+            const sidebarButtons = sidebar.querySelectorAll('button:not(.sidebar-toggle)');
+            sidebarButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        closeMobileMenu();
+                    }
+                });
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    closeMobileMenu();
+                    // Reset sidebar toggle button icon on resize
+                    if (sidebar.classList.contains('minimized')) {
+                        sidebarIcon.className = 'fas fa-chevron-right';
+                    } else {
+                        sidebarIcon.className = 'fas fa-chevron-left';
+                    }
+                } else {
+                    // Hide sidebar toggle on mobile
+                    sidebar.classList.remove('minimized');
+                    sidebarIcon.className = 'fas fa-chevron-left';
+                }
+            });
+
+            // Set initial state
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('minimized');
+            }
+        });
+    </script>
 </body>
 </html>
